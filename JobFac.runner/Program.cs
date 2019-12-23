@@ -17,7 +17,7 @@ namespace JobFac.runner
             if (!Guid.TryParse(jobKey, out var _))
                 throw new Exception($"Job instance-key is invalid, format-D GUID expected");
 
-            var clusterClient = await GetOrleansClusterClient();
+            var clusterClient = await GetClusterClient();
             var jobService = clusterClient.GetGrain<IJob>(jobKey);
             if (jobService == null)
                 throw new Exception($"Unable to connect to job service (instance {jobKey}");
@@ -34,12 +34,12 @@ namespace JobFac.runner
             }
             finally
             {
-                clusterClient?.Close();
-                clusterClient?.Dispose();
+                await clusterClient.Close();
+                clusterClient.Dispose();
             }
         }
 
-        static async Task<IClusterClient> GetOrleansClusterClient()
+        static async Task<IClusterClient> GetClusterClient()
         {
             var client = new ClientBuilder()
                 //.ConfigureLogging(logging => {

@@ -58,11 +58,15 @@ namespace JobFac.runner
                     return;
                 }
 
+                // TODO stdout and stderr logging
+
                 if (jobDef.BulkUpdateStdOut) // || jobDef.LogStdOut)
                     proc.BeginOutputReadLine();
 
                 if (jobDef.BulkUpdateStdErr) // || jobDef.LogStdErr)
                     proc.BeginErrorReadLine();
+
+                await jobService.UpdateRunStatus(RunStatus.Running);
 
                 // TODO implement maximum run-time token cancellation
 
@@ -84,7 +88,7 @@ namespace JobFac.runner
                     // when true, job is JobProc-aware and should have called UpdateExitMessage
                     if (!jobDef.PrefixJobInstanceIdArgument)
                     {
-                        var finalStatus = (proc.ExitCode == 0) ? RunStatus.Ended : RunStatus.Failed;
+                        var finalStatus = (proc.ExitCode < 0) ? RunStatus.Failed : RunStatus.Ended;
                         await jobService.UpdateExitMessage(finalStatus, proc.ExitCode, string.Empty);
                     }
                     // TODO play it safe and retrieve status and verify JobProc-aware job actually set an exit message?

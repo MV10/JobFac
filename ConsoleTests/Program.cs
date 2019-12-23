@@ -5,6 +5,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Orleans;
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
 
@@ -23,52 +24,67 @@ namespace ConsoleTests
 
             //await TestGetJobDefinition();
             await TestStartJob();
+
+            if(!Debugger.IsAttached)
+            {
+                Console.WriteLine("\n\nPress any key to exit.");
+                Console.ReadKey(true);
+            }
         }
 
         static async Task TestStartJob()
         {
             Console.WriteLine("Getting cluster client.");
-            var client = await GetOrleansClusterClient();
+            var client = await GetClusterClient();
 
-            Console.WriteLine("Getting job factory proxy.");
-            var factory = client.GetGrain<IJobFactory>(0);
-
-            var options = new FactoryStartOptions
+            try
             {
-                DefinitionId = "Sample.JobFac.unaware",
-                NotificationScope = NotificationScope.None,
-                ReplacementArguments = new System.Collections.Generic.Dictionary<string, string>(),
-                StartupPayloads = new System.Collections.Generic.Dictionary<string, string>()
-            };
+                Console.WriteLine("Getting job factory proxy.");
+                var factory = client.GetGrain<IJobFactory>(0);
 
-            Console.WriteLine("Starting 45-second job: Sample.JobFac.unaware");
-            var jobKey = await factory.StartJob(options);
-            Console.WriteLine($"Job instance key: {jobKey}");
-
-            var timeout = DateTimeOffset.UtcNow.AddSeconds(90);
-            bool done = false;
-            IJob job = null;
-            while(!done && DateTimeOffset.UtcNow < timeout)
-            {
-                Console.WriteLine("Pausing 10 seconds then reading status.");
-                await Task.Delay(10000);
-
-                if (job == null) job = client.GetGrain<IJob>(jobKey);
-                if (job == null)
+                var options = new FactoryStartOptions
                 {
-                    Console.WriteLine("Unable to get job proxy.");
-                    done = true;
-                    break;
+                    DefinitionId = "Sample.JobFac.unaware",
+                    NotificationScope = NotificationScope.None,
+                    ReplacementArguments = new System.Collections.Generic.Dictionary<string, string>(),
+                    StartupPayloads = new System.Collections.Generic.Dictionary<string, string>()
+                };
+
+                Console.WriteLine("Starting 45-second job: Sample.JobFac.unaware");
+                var jobKey = await factory.StartJob(options);
+                Console.WriteLine($"Job instance key: {jobKey}");
+
+                var timeout = DateTimeOffset.UtcNow.AddSeconds(90);
+                bool done = false;
+                IJob job = null;
+                while (!done && DateTimeOffset.UtcNow < timeout)
+                {
+                    Console.WriteLine("Pausing 10 seconds then reading status.");
+                    await Task.Delay(10000);
+
+                    if (job == null) job = client.GetGrain<IJob>(jobKey);
+                    if (job == null)
+                    {
+                        Console.WriteLine("Unable to get job proxy.");
+                        done = true;
+                        break;
+                    }
+
+                    var status = await job.GetStatus();
+                    Console.WriteLine($"Status {status.RunStatus} last updated {status.LastUpdated.ToLocalTime()}");
+                    done = status.HasExited;
                 }
-
-                var status = await job.GetStatus();
-                Console.WriteLine($"Status {status.RunStatus} last updated {status.LastUpdated.ToLocalTime()}");
-                done = status.HasExited;
             }
-
-            Console.WriteLine("Closing cluster client.");
-            await client.Close();
-            client.Dispose();
+            catch(Exception ex)
+            {
+                Console.WriteLine($"\n\nException {ex}\n\n");
+            }
+            finally
+            {
+                Console.WriteLine("Closing cluster client.");
+                await client.Close();
+                client.Dispose();
+            }
         }
 
         static async Task TestGetJobDefinition()
@@ -96,7 +112,7 @@ namespace ConsoleTests
         }
 
         // cribbed from JobFac.runner
-        static async Task<IClusterClient> GetOrleansClusterClient()
+        static async Task<IClusterClient> GetClusterClient()
         {
             var client = new ClientBuilder()
                 //.ConfigureLogging(logging => {

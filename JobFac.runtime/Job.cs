@@ -14,7 +14,7 @@ namespace JobFac.runtime
 {
     public class Job : Grain, IJob
     {
-        private string key = null;
+        private string jobInstanceKey = null;
         private JobStatus status = null;
         private JobDefinition jobDefinition = null;
 
@@ -29,15 +29,15 @@ namespace JobFac.runtime
 
         public override async Task OnActivateAsync()
         {
-            key = this.GetPrimaryKeyString();
-            var history = await historyRepo.GetJobHistory(key);
+            jobInstanceKey = this.GetPrimaryKeyString();
+            var history = await historyRepo.GetJobHistory(jobInstanceKey);
             if(history != null) status = historyRepo.DeserializeDetails(history);
         }
 
         public async Task Start(JobDefinition jobDefinition, FactoryStartOptions options)
         {
             if (status != null)
-                throw new Exception($"Job has already been started (instance {key})");
+                throw new Exception($"Job has already been started (instance {jobInstanceKey})");
 
             jobDefinition.ThrowIfInvalid();
 
@@ -45,7 +45,7 @@ namespace JobFac.runtime
 
             status = new JobStatus
             {
-                Key = key,
+                Key = jobInstanceKey,
                 StartOptions = options,
                 LastUpdated = DateTimeOffset.UtcNow,
                 RunStatus = RunStatus.Unknown,
@@ -55,12 +55,77 @@ namespace JobFac.runtime
             };
             await historyRepo.InsertStatus(status);
 
+            await LaunchRunner();
+
+            // TODO add startup timeout to check whether RunStatus changes from Unknown (requires grain timer support)
+        }
+
+        public Task<JobDefinition> GetDefinition()
+        {
+            if (jobDefinition == null)
+                throw new Exception($"Job has not been started (instance {jobInstanceKey})");
+
+            return Task.FromResult(jobDefinition);
+        }
+
+        public Task<JobStatus> GetStatus()
+        {
+            if (status == null)
+                throw new Exception($"Job has not been started (instance {jobInstanceKey})");
+
+            return Task.FromResult(status);
+        }
+
+        public async Task UpdateExitMessage(RunStatus runStatus, int exitCode, string exitMessage)
+        {
+            if (status == null)
+                throw new Exception($"Job has not been started (instance {jobInstanceKey})");
+
+            if (status.HasExited)
+                throw new Exception($"Job has already exited (instance {jobInstanceKey})");
+
+            status.ExitCode = exitCode;
+            status.ExitMessage = exitMessage;
+            await StoreNewRunStatus(runStatus);
+        }
+
+        public async Task UpdateRunStatus(RunStatus runStatus)
+        {
+            if (status == null)
+                throw new Exception($"Job has not been started (instance {jobInstanceKey})");
+
+            if (status.HasExited)
+                throw new Exception($"Job has already exited (instance {jobInstanceKey})");
+
+            await StoreNewRunStatus(runStatus);
+        }
+
+        public async Task Stop()
+        {
+            if (status == null)
+                throw new Exception($"Job has not been started (instance {jobInstanceKey})");
+
+            if (status.RunStatus != RunStatus.Running)
+                throw new Exception($"Job is not in Running status (instance {jobInstanceKey})");
+
+            if (status.HasExited)
+                throw new Exception($"Job has already exited (instance {jobInstanceKey})");
+
+            await StoreNewRunStatus(RunStatus.StopRequested);
+
+            // Simply connecting to the runner's named-pipe is the signal to kill the child process.
+            using var client = new NamedPipeClientStream(".", jobInstanceKey, PipeDirection.Out, PipeOptions.Asynchronous);
+            await client.ConnectAsync(ConstTimeouts.NamedPipeClientConnectMS);
+        }
+
+        private async Task LaunchRunner()
+        {
             var proc = new Process();
             try
             {
                 proc.StartInfo.FileName = runnerExecutablePathname;
                 proc.StartInfo.WorkingDirectory = Path.GetDirectoryName(runnerExecutablePathname);
-                proc.StartInfo.Arguments = key;
+                proc.StartInfo.Arguments = jobInstanceKey;
                 proc.StartInfo.UseShellExecute = false;
                 proc.StartInfo.CreateNoWindow = true;
                 if (!proc.Start())
@@ -74,72 +139,9 @@ namespace JobFac.runtime
                 proc?.Close(); // releases resources but does not terminate process
                 proc?.Dispose();
             }
-
-            // TODO add startup timeout to check whether RunStatus changes from Unknown (requires grain timer support)
         }
 
-        public Task<JobDefinition> GetDefinition()
-        {
-            if (jobDefinition == null)
-                throw new Exception($"Job has not been started (instance {key})");
-
-            return Task.FromResult(jobDefinition);
-        }
-
-        public Task<JobStatus> GetStatus()
-        {
-            if (status == null)
-                throw new Exception($"Job has not been started (instance {key})");
-
-            return Task.FromResult(status);
-        }
-
-        public async Task UpdateExitMessage(RunStatus runStatus, int exitCode, string exitMessage)
-        {
-            if (status == null)
-                throw new Exception($"Job has not been started (instance {key})");
-
-            if (status.HasExited)
-                throw new Exception($"Job has already exited (instance {key})");
-
-            status.ExitCode = exitCode;
-            status.ExitMessage = exitMessage;
-            ChangeStatus(runStatus);
-            await historyRepo.UpdateStatus(status);
-        }
-
-        public async Task UpdateRunStatus(RunStatus runStatus)
-        {
-            if (status == null)
-                throw new Exception($"Job has not been started (instance {key})");
-
-            if (status.HasExited)
-                throw new Exception($"Job has already exited (instance {key})");
-
-            ChangeStatus(runStatus);
-            await historyRepo.UpdateStatus(status);
-        }
-
-        public async Task Stop()
-        {
-            if (status == null)
-                throw new Exception($"Job has not been started (instance {key})");
-
-            if (status.RunStatus != RunStatus.Running)
-                throw new Exception($"Job is not in Running status (instance {key})");
-
-            if (status.HasExited)
-                throw new Exception($"Job has already exited (instance {key})");
-
-            ChangeStatus(RunStatus.StopRequested);
-            await historyRepo.UpdateStatus(status);
-
-            // Simply connecting to the runner's named-pipe is the signal to kill the child process.
-            using var client = new NamedPipeClientStream(".", key, PipeDirection.Out, PipeOptions.Asynchronous);
-            await client.ConnectAsync(ConstTimeouts.NamedPipeClientConnectMS);
-        }
-
-        private void ChangeStatus(RunStatus runStatus)
+        private async Task StoreNewRunStatus(RunStatus runStatus)
         {
             // TODO notifications
 
@@ -162,8 +164,8 @@ namespace JobFac.runtime
                     break;
 
                 case RunStatus.Stopped:
-                    status.HasExited = true;
                     status.HasFailed = true;
+                    status.HasExited = true;
                     status.ExitStateReceived = now;
                     break;
 
@@ -173,8 +175,8 @@ namespace JobFac.runtime
                     break;
 
                 case RunStatus.Failed:
-                    status.HasExited = true;
                     status.HasFailed = true;
+                    status.HasExited = true;
                     status.ExitStateReceived = now;
                     break;
 
@@ -184,6 +186,8 @@ namespace JobFac.runtime
                     status.ExitStateReceived = now;
                     break;
             }
+
+            await historyRepo.UpdateStatus(status);
         }
     }
 }
