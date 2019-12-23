@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
+﻿
 namespace JobFac.lib.Constants
 {
     public static class ConstConfigKeys
@@ -10,5 +7,6 @@ namespace JobFac.lib.Constants
         public static readonly string StorageConnectionStringName = "JobFacStorage";
 
         public static readonly string HistoryRetentionDays = "HistoryRetentionDays";
+        public static readonly string RunnerExecutablePathname = "RunnerExecutablePathname";
     }
 }

@@ -10,17 +10,17 @@ namespace JobFac.database
 {
     public abstract class DapperRepositoryBase
     {
-        protected internal string connectionString { get; set; }
+        private protected string connectionString { get; set; }
 
         public DapperRepositoryBase(IConfiguration config)
         {
             connectionString = config.GetConnectionString(ConstConfigKeys.StorageConnectionStringName);
         }
 
-        protected internal async Task<T> QueryOneAsync<T>(string sql, object param)
+        private protected async Task<T> QueryOneAsync<T>(string sql, object param)
             => (await QueryAsync<T>(sql, param)).FirstOrDefault();
 
-        protected internal async Task<IReadOnlyList<T>> QueryAsync<T>(string sql, object param)
+        private protected async Task<IReadOnlyList<T>> QueryAsync<T>(string sql, object param)
         {
             using var conn = new SqlConnection(connectionString);
             await conn.OpenAsync();
@@ -29,7 +29,7 @@ namespace JobFac.database
             return result.ToList();
         }
 
-        protected internal async Task ExecAsync(string sql, object param)
+        private protected async Task ExecAsync(string sql, object param)
         {
             using var conn = new SqlConnection(connectionString);
             await conn.OpenAsync();

@@ -1,79 +1,189 @@
 ﻿using JobFac.database;
+using JobFac.lib.Constants;
 using JobFac.lib.DataModels;
 using JobFac.services;
+using Microsoft.Extensions.Configuration;
 using Orleans;
 using System;
+using System.Diagnostics;
+using System.IO;
+using System.IO.Pipes;
 using System.Threading.Tasks;
 
 namespace JobFac.runtime
 {
     public class Job : Grain, IJob
     {
-        private JobStatus status;
+        private readonly string key = null;
+        private JobStatus status = null;
+        private JobDefinition jobDefinition = null;
 
         private readonly HistoryRepository historyRepo;
+        private readonly string runnerExecutablePathname;
 
-        public Job(HistoryRepository history)
+        public Job(HistoryRepository history, IConfiguration configuration)
         {
+            key = this.GetPrimaryKeyString();
             historyRepo = history;
+            runnerExecutablePathname = configuration.GetValue<string>(ConstConfigKeys.RunnerExecutablePathname);
         }
 
         public override async Task OnActivateAsync()
         {
-            var key = this.GetPrimaryKeyString();
             var history = await historyRepo.GetJobHistory(key);
-            if(history == null)
+            if(history != null) status = historyRepo.DeserializeDetails(history);
+        }
+
+        public async Task Start(JobDefinition jobDefinition, FactoryStartOptions options)
+        {
+            if (status != null)
+                throw new Exception($"Job instance {key} has already been started");
+
+            this.jobDefinition = jobDefinition;
+
+            status = new JobStatus
             {
-                status = new JobStatus
+                Key = key,
+                StartOptions = options,
+                LastUpdated = DateTimeOffset.UtcNow,
+                RunStatus = RunStatus.Unknown,
+                HasStarted = false,
+                HasExited = false,
+                HasFailed = false
+            };
+            await historyRepo.InsertStatus(status);
+
+            var proc = new Process();
+            try
+            {
+                proc.StartInfo.FileName = runnerExecutablePathname;
+                proc.StartInfo.WorkingDirectory = Path.GetDirectoryName(runnerExecutablePathname);
+                proc.StartInfo.Arguments = key;
+                proc.StartInfo.UseShellExecute = false;
+                proc.StartInfo.CreateNoWindow = true;
+                if (!proc.Start())
                 {
-                    Key = key,
-                    LastUpdated = DateTimeOffset.UtcNow,
-                    RunStatus = RunStatus.Unknown,
-                    HasStarted = false,
-                    HasCompleted = false,
-                    HasFailed = false
-                };
-                await historyRepo.InsertStatus(status);
+                    await UpdateExitMessage(RunStatus.StartFailed, -1, "Unable to start JobFac runner");
+                    return;
+                }
             }
-            else
+            finally
             {
-                status = historyRepo.DeserializeDetails(history);
+                proc?.Close(); // releases resources but does not terminate process
+                proc?.Dispose();
             }
-        }
 
-        private async Task WriteStatus()
-        {
-            // TODO call history repo to insert/update status
-        }
-
-        public Task Start(JobDefinition jobDefinition, FactoryStartOptions options)
-        {
-            throw new NotImplementedException();
+            // TODO add startup timeout to check whether RunStatus changes from Unknown (requires grain timer support)
         }
 
         public Task<JobDefinition> GetDefinition()
         {
-            throw new NotImplementedException();
+            if (jobDefinition == null)
+                throw new Exception($"Job instance {key} has not been started");
+
+            return Task.FromResult(jobDefinition);
         }
 
         public Task<JobStatus> GetStatus()
         {
-            throw new NotImplementedException();
+            if (status == null)
+                throw new Exception($"Job instance {key} has not been started");
+
+            return Task.FromResult(status);
         }
 
-        public Task UpdateExitMessage(RunStatus runStatus, string exitMessage)
+        public async Task UpdateExitMessage(RunStatus runStatus, int exitCode, string exitMessage)
         {
-            throw new NotImplementedException();
+            if (status == null)
+                throw new Exception($"Job instance {key} has not been started");
+
+            if (status.HasExited)
+                throw new Exception($"Job instance {key} has already exited");
+
+            status.RunStatus = runStatus;
+            status.ExitCode = exitCode;
+            status.ExitMessage = exitMessage;
+            EvaluateStatusChange();
+
+            // TODO notifications
+
+            await historyRepo.UpdateStatus(status);
         }
 
-        public Task UpdateRunStatus(RunStatus runStatus)
+        public async Task UpdateRunStatus(RunStatus runStatus)
         {
-            throw new NotImplementedException();
+            if (status == null)
+                throw new Exception($"Job instance {key} has not been started");
+
+            if (status.HasExited)
+                throw new Exception($"Job instance {key} has already exited");
+
+            status.RunStatus = runStatus;
+            EvaluateStatusChange();
+
+            // TODO notifications
+
+            await historyRepo.UpdateStatus(status);
         }
 
-        public Task Stop()
+        public async Task Stop()
         {
-            throw new NotImplementedException();
+            if (status == null)
+                throw new Exception($"Job instance {key} has not been started");
+
+            if (status.RunStatus != RunStatus.Running)
+                throw new Exception($"Job instance {key} is not in Running status");
+
+            if (status.HasExited)
+                throw new Exception($"Job instance {key} has already exited");
+
+            status.RunStatus = RunStatus.StopRequested;
+
+            // TODO notifications
+
+            await historyRepo.UpdateStatus(status);
+
+            // Simply connecting to the runner's named-pipe is the signal to kill the child process.
+            using var client = new NamedPipeClientStream(".", key, PipeDirection.Out, PipeOptions.Asynchronous);
+            await client.ConnectAsync(ConstTimeouts.NamedPipeClientConnectMS);
+        }
+
+        private void EvaluateStatusChange()
+        {
+            var now = DateTimeOffset.UtcNow;
+            status.LastUpdated = now;
+            switch (status.RunStatus)
+            {
+                case RunStatus.StartRequested:
+                    status.StartRequested = now;
+                    break;
+
+                case RunStatus.StartFailed:
+                    status.HasExited = true;
+                    status.ExitStateReceived = now;
+                    break;
+
+                case RunStatus.Running:
+                    status.HasStarted = true;
+                    break;
+
+                case RunStatus.Stopped:
+                    status.HasExited = true;
+                    status.HasFailed = true;
+                    status.ExitStateReceived = now;
+                    break;
+
+                case RunStatus.Ended:
+                    status.HasExited = true;
+                    status.ExitStateReceived = now;
+                    break;
+
+                case RunStatus.Failed:
+                    status.HasExited = true;
+                    status.HasFailed = true;
+                    status.ExitStateReceived = now;
+                    break;
+            }
         }
     }
 }

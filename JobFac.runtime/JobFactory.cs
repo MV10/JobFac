@@ -54,8 +54,8 @@ namespace JobFac.runtime
 
             // TODO actually start a sequence
 
-            var key = Guid.NewGuid().ToString();
-            return key;
+            var sequenceInstanceKey = Guid.NewGuid().ToString();
+            return sequenceInstanceKey;
         }
     }
 }

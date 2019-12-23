@@ -10,7 +10,7 @@ namespace JobFac.services
         Task<JobDefinition> GetDefinition();
         Task<JobStatus> GetStatus();
         Task UpdateRunStatus(RunStatus runStatus);
-        Task UpdateExitMessage(RunStatus runStatus, string exitMessage);
+        Task UpdateExitMessage(RunStatus runStatus, int exitCode, string exitMessage);
         Task Stop();
     }
 }

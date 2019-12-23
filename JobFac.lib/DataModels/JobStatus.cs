@@ -18,7 +18,7 @@ namespace JobFac.lib.DataModels
         public DateTimeOffset ExitStateReceived;
 
         public bool HasStarted;
-        public bool HasCompleted;
+        public bool HasExited;
         public bool HasFailed;
 
         public int ExitCode;
