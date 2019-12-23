@@ -54,28 +54,54 @@ namespace ConsoleTests
                 var jobKey = await factory.StartJob(options);
                 Console.WriteLine($"Job instance key: {jobKey}");
 
-                var timeout = DateTimeOffset.UtcNow.AddSeconds(90);
-                bool done = false;
-                IJob job = null;
-                while (!done && DateTimeOffset.UtcNow < timeout)
+                //await TestMonitorJob();
+                await TestKillJob();
+
+                async Task TestKillJob()
                 {
-                    Console.WriteLine("Pausing 10 seconds then reading status.");
-                    await Task.Delay(10000);
-
-                    if (job == null) job = client.GetGrain<IJob>(jobKey);
-                    if (job == null)
+                    Console.WriteLine("Waiting 25 seconds then will kill job.");
+                    await Task.Delay(25000);
+                    var job = client.GetGrain<IJob>(jobKey);
+                    if (job != null)
                     {
-                        Console.WriteLine("Unable to get job proxy.");
-                        done = true;
-                        break;
+                        var status = await job.GetStatus();
+                        Console.WriteLine($"Status {status.RunStatus} last updated {status.LastUpdated.ToLocalTime()}");
+                        Console.WriteLine("Killing job then sleepint for 5 seconds.");
+                        await job.Stop();
+                        await Task.Delay(5000);
+                        status = await job.GetStatus();
+                        Console.WriteLine($"Status {status.RunStatus} last updated {status.LastUpdated.ToLocalTime()}");
                     }
-
-                    var status = await job.GetStatus();
-                    Console.WriteLine($"Status {status.RunStatus} last updated {status.LastUpdated.ToLocalTime()}");
-                    done = status.HasExited;
+                    else
+                        Console.WriteLine("Failed to obtain job proxy.");
                 }
+
+                async Task TestMonitorJob()
+                {
+                    var timeout = DateTimeOffset.UtcNow.AddSeconds(90);
+                    bool done = false;
+                    IJob job = null;
+                    while (!done && DateTimeOffset.UtcNow < timeout)
+                    {
+                        Console.WriteLine("Pausing 10 seconds then reading status.");
+                        await Task.Delay(10000);
+
+                        if (job == null) job = client.GetGrain<IJob>(jobKey);
+                        if (job == null)
+                        {
+                            Console.WriteLine("Failed to obtain job proxy.");
+                            done = true;
+                            break;
+                        }
+
+                        var status = await job.GetStatus();
+                        Console.WriteLine($"Status {status.RunStatus} last updated {status.LastUpdated.ToLocalTime()}");
+                        done = status.HasExited;
+                    }
+                }
+
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 Console.WriteLine($"\n\nException {ex}\n\n");
             }
