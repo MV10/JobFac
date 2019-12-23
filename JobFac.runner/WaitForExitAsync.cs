@@ -3,22 +3,22 @@ using System.Threading.Tasks;
 
 namespace System.Diagnostics
 {
-    public static class ProcessWaitForExitAsyncExtension
+    public static class WaitForExitAsync
     {
-        public static async Task WaitForExitAsync(this Process process, CancellationToken token = default)
+        public static async Task Wait(Process proc, CancellationToken token = default)
         {
             var completion = new TaskCompletionSource<bool>();
-            process.EnableRaisingEvents = true;
-            process.Exited += CompleteTaskOnExit;
+            proc.EnableRaisingEvents = true;
+            proc.Exited += CompleteTaskOnExit;
             try
             {
-                if (process.HasExited) return;
+                if (proc.HasExited) return;
                 using var reg = token.Register(() => Task.Run(() => completion.SetCanceled()));
                 await completion.Task;
             }
             finally
             {
-                process.Exited -= CompleteTaskOnExit;
+                proc.Exited -= CompleteTaskOnExit;
             }
 
             void CompleteTaskOnExit(object s, EventArgs e)

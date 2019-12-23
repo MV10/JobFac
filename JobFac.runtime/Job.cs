@@ -102,13 +102,9 @@ namespace JobFac.runtime
             if (status.HasExited)
                 throw new Exception($"Job has already exited (instance {key})");
 
-            status.RunStatus = runStatus;
             status.ExitCode = exitCode;
             status.ExitMessage = exitMessage;
-            EvaluateStatusChange();
-
-            // TODO notifications
-
+            ChangeStatus(runStatus);
             await historyRepo.UpdateStatus(status);
         }
 
@@ -120,11 +116,7 @@ namespace JobFac.runtime
             if (status.HasExited)
                 throw new Exception($"Job has already exited (instance {key})");
 
-            status.RunStatus = runStatus;
-            EvaluateStatusChange();
-
-            // TODO notifications
-
+            ChangeStatus(runStatus);
             await historyRepo.UpdateStatus(status);
         }
 
@@ -139,10 +131,7 @@ namespace JobFac.runtime
             if (status.HasExited)
                 throw new Exception($"Job has already exited (instance {key})");
 
-            status.RunStatus = RunStatus.StopRequested;
-
-            // TODO notifications
-
+            ChangeStatus(RunStatus.StopRequested);
             await historyRepo.UpdateStatus(status);
 
             // Simply connecting to the runner's named-pipe is the signal to kill the child process.
@@ -150,11 +139,14 @@ namespace JobFac.runtime
             await client.ConnectAsync(ConstTimeouts.NamedPipeClientConnectMS);
         }
 
-        private void EvaluateStatusChange()
+        private void ChangeStatus(RunStatus runStatus)
         {
+            // TODO notifications
+
             var now = DateTimeOffset.UtcNow;
             status.LastUpdated = now;
-            switch (status.RunStatus)
+            status.RunStatus = runStatus;
+            switch (runStatus)
             {
                 case RunStatus.StartRequested:
                     status.StartRequested = now;

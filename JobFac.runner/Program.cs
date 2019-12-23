@@ -24,23 +24,19 @@ namespace JobFac.runner
 
             try
             {
+                await jobService.UpdateRunStatus(RunStatus.StartRequested);
                 var jobDef = await jobService.GetDefinition();
-                await RunJob(jobService, jobDef);
+                await ProcessMonitor.RunJob(jobService, jobDef, jobKey);
             }
             catch(Exception ex)
             {
-                await jobService.UpdateExitMessage(RunStatus.Unknown, -1, $"Runner exception {ex}");
+                await jobService.UpdateExitMessage(RunStatus.Unknown, -1, $"JobFac.runner exception {ex}");
             }
             finally
             {
                 clusterClient?.Close();
                 clusterClient?.Dispose();
             }
-        }
-
-        static async Task RunJob(IJob jobService, JobDefinition jobDef)
-        {
-
         }
 
         static async Task<IClusterClient> GetOrleansClusterClient()
