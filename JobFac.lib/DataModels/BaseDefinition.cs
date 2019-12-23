@@ -11,7 +11,8 @@
         public bool StartOnDemand;      // ignored when IsStartDisabled is true
         public bool StartBySchedule;    // ignored when IsStartDisabled is true
 
-        // can we enforce this with Orleans? would have to discover running instances
+        // TODO figure out overlapping startup rules
+        // query history table for instances in start/running states
         // use an enum? allow, disallow, stopotherinstance, skipthisinstance
         public bool AllowOverlappingStartup; 
 

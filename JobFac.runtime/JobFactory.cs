@@ -25,8 +25,7 @@ namespace JobFac.runtime
 
         public async Task<string> StartJob(FactoryStartOptions options)
         {
-            if (!options.DefinitionId.HasContent())
-                throw new ArgumentException("Job definition id is required");
+            options.ThrowIfInvalid();
 
             var id = options.DefinitionId;
 
@@ -49,8 +48,7 @@ namespace JobFac.runtime
 
         public async Task<string> StartSequence(FactoryStartOptions options)
         {
-            if (!options.DefinitionId.HasContent())
-                throw new ArgumentException("Sequence definition id is required");
+            options.ThrowIfInvalid();
 
             // TODO actually start a sequence
 

@@ -37,7 +37,9 @@ namespace JobFac.runtime
         public async Task Start(JobDefinition jobDefinition, FactoryStartOptions options)
         {
             if (status != null)
-                throw new Exception($"Job instance {key} has already been started");
+                throw new Exception($"Job has already been started (instance {key})");
+
+            jobDefinition.ThrowIfInvalid();
 
             this.jobDefinition = jobDefinition;
 
@@ -79,7 +81,7 @@ namespace JobFac.runtime
         public Task<JobDefinition> GetDefinition()
         {
             if (jobDefinition == null)
-                throw new Exception($"Job instance {key} has not been started");
+                throw new Exception($"Job has not been started (instance {key})");
 
             return Task.FromResult(jobDefinition);
         }
@@ -87,7 +89,7 @@ namespace JobFac.runtime
         public Task<JobStatus> GetStatus()
         {
             if (status == null)
-                throw new Exception($"Job instance {key} has not been started");
+                throw new Exception($"Job has not been started (instance {key})");
 
             return Task.FromResult(status);
         }
@@ -95,10 +97,10 @@ namespace JobFac.runtime
         public async Task UpdateExitMessage(RunStatus runStatus, int exitCode, string exitMessage)
         {
             if (status == null)
-                throw new Exception($"Job instance {key} has not been started");
+                throw new Exception($"Job has not been started (instance {key})");
 
             if (status.HasExited)
-                throw new Exception($"Job instance {key} has already exited");
+                throw new Exception($"Job has already exited (instance {key})");
 
             status.RunStatus = runStatus;
             status.ExitCode = exitCode;
@@ -113,10 +115,10 @@ namespace JobFac.runtime
         public async Task UpdateRunStatus(RunStatus runStatus)
         {
             if (status == null)
-                throw new Exception($"Job instance {key} has not been started");
+                throw new Exception($"Job has not been started (instance {key})");
 
             if (status.HasExited)
-                throw new Exception($"Job instance {key} has already exited");
+                throw new Exception($"Job has already exited (instance {key})");
 
             status.RunStatus = runStatus;
             EvaluateStatusChange();
@@ -129,13 +131,13 @@ namespace JobFac.runtime
         public async Task Stop()
         {
             if (status == null)
-                throw new Exception($"Job instance {key} has not been started");
+                throw new Exception($"Job has not been started (instance {key})");
 
             if (status.RunStatus != RunStatus.Running)
-                throw new Exception($"Job instance {key} is not in Running status");
+                throw new Exception($"Job is not in Running status (instance {key})");
 
             if (status.HasExited)
-                throw new Exception($"Job instance {key} has already exited");
+                throw new Exception($"Job has already exited (instance {key})");
 
             status.RunStatus = RunStatus.StopRequested;
 
@@ -181,6 +183,12 @@ namespace JobFac.runtime
                 case RunStatus.Failed:
                     status.HasExited = true;
                     status.HasFailed = true;
+                    status.ExitStateReceived = now;
+                    break;
+
+                // JobFac.runner faulted while job was still running
+                case RunStatus.Unknown:
+                    status.HasExited = true;
                     status.ExitStateReceived = now;
                     break;
             }

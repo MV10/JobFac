@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 
 namespace System.Diagnostics
 {
-    public static class ProcessWaitForExitAsyncExtensions
+    public static class ProcessWaitForExitAsyncExtension
     {
         public static async Task WaitForExitAsync(this Process process, CancellationToken token = default)
         {

@@ -11,11 +11,17 @@ namespace JobFac.runner
         static async Task Main(string[] args)
         {
             if (args.Length != 1)
-                throw new Exception("Missing required job instance ID argument");
+                throw new Exception("Runner requires one argument reflecting the job instance-key");
 
-            var jobId = args[0];
+            var jobKey = args[0];
+            if (!Guid.TryParse(jobKey, out var _))
+                throw new Exception($"Job instance-key is invalid, format-D GUID expected");
+
             var clusterClient = await GetOrleansClusterClient();
-            var jobService = clusterClient.GetGrain<IJob>(jobId);
+            var jobService = clusterClient.GetGrain<IJob>(jobKey);
+            if (jobService == null)
+                throw new Exception($"Unable to connect to job service (instance {jobKey}");
+
             try
             {
                 var jobDef = await jobService.GetDefinition();
@@ -23,7 +29,7 @@ namespace JobFac.runner
             }
             catch(Exception ex)
             {
-
+                await jobService.UpdateExitMessage(RunStatus.Unknown, -1, $"Runner exception {ex}");
             }
             finally
             {

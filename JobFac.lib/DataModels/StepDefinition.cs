@@ -15,7 +15,7 @@
         public string StartCriteria2;
         public StepAction StartTrueAction;
         public StepAction StartFalseAction;
-        public int StartTrueStepNumber;
+        public int StartTrueStepNumber; // use current step# for either of these
         public int StartFalseStepNumber;
 
         public StepExitDecision ExitDecision;

@@ -4,6 +4,6 @@
     {
         DoActionWhenAllExit,
         DoActionWhenAnyExit,
-        FireAndForget
+        DoNextStepWithoutWaiting
     }
 }
