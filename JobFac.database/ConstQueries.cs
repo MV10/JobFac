@@ -3,6 +3,9 @@ namespace JobFac.database
 {
     public static class ConstQueries
     {
+        public static readonly string SelectJobDefinition = "SELECT * FROM JobDefinition WHERE Id = @Id;";
+        public static readonly string SelectSequenceDefinition = "SELECT * FROM SequenceDefinition WHERE Id = @Id;";
+        public static readonly string SelectSequenceSteps = "SELECT * FROM StepDefinition WHERE SequenceId = @Id ORDER BY Step;";
 
         public static readonly string SelectJobHistory = "SELECT * FROM JobHistory WHERE InstanceKey = @InstanceKey;";
         public static readonly string SelectSequenceHistory = "SELECT * FROM SequenceHistory WHERE InstanceKey = @InstanceKey;";

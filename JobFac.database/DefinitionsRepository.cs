@@ -1,14 +1,9 @@
-﻿using JobFac.lib.Constants;
-using JobFac.lib.DataModels;
-using Dapper;
+﻿using JobFac.lib.DataModels;
 using Microsoft.Extensions.Configuration;
-using System;
 using System.Collections.Generic;
-using System.Data.SqlClient;
-using System.Linq;
 using System.Threading.Tasks;
 
-// https://github.com/StackExchange/Dapper#execute-a-query-and-map-the-results-to-a-strongly-typed-list
+// TODO insert/update/delete jobs, sequences, steps, and query jobs/sequences by category
 
 namespace JobFac.database
 {
@@ -16,36 +11,16 @@ namespace JobFac.database
     {
         public DefinitionsRepository(IConfiguration config)
             : base(config)
-        {
-        }
+        { }
 
         public async Task<JobDefinition> GetJobDefinition(string id)
-        {
-            using var conn = new SqlConnection(connectionString);
-            await conn.OpenAsync();
-            var jobDef = conn.Query<JobDefinition>("SELECT * FROM JobDefinition WHERE Id = @Id;", new { Id = id }).FirstOrDefault();
-            await conn.CloseAsync();
-            return jobDef;
-        }
+            => await QueryOneAsync<JobDefinition>(ConstQueries.SelectJobDefinition, new { Id = id });
 
         public async Task<SequenceDefinition> GetSequenceDefinition(string id)
-        {
-            using var conn = new SqlConnection(connectionString);
-            await conn.OpenAsync();
-            var seqDef = conn.Query<SequenceDefinition>("SELECT * FROM SequenceDefinition WHERE Id = @Id;", new { Id = id }).FirstOrDefault();
-            await conn.CloseAsync();
-            return seqDef;
-        }
+            => await QueryOneAsync<SequenceDefinition>(ConstQueries.SelectSequenceDefinition, new { Id = id });
 
         public async Task<IReadOnlyList<StepDefinition>> GetStepsForSequence(string id)
-        {
-            using var conn = new SqlConnection(connectionString);
-            await conn.OpenAsync();
-            var steps = conn.Query<StepDefinition>("SELECT * FROM StepDefinition WHERE SequenceId = @Id ORDER BY Step;", new { Id = id }).ToList();
-            await conn.CloseAsync();
-            return steps;
-        }
+            => await QueryAsync<StepDefinition>(ConstQueries.SelectSequenceSteps, new { Id = id });
 
-        // TODO query job and sequence definition grouped by category, and insert/update/delete logic
     }
 }

@@ -22,3 +22,5 @@ The goal is to keep this fully open sourced and free to use, along the same line
 * .NET Core 3.1
 * Microsoft Orleans 3.0
 * Dapper 2.0
+* SQL Server 2016+
+
