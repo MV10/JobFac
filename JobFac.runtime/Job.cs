@@ -14,7 +14,7 @@ namespace JobFac.runtime
 {
     public class Job : Grain, IJob
     {
-        private readonly string key = null;
+        private string key = null;
         private JobStatus status = null;
         private JobDefinition jobDefinition = null;
 
@@ -23,13 +23,13 @@ namespace JobFac.runtime
 
         public Job(HistoryRepository history, IConfiguration configuration)
         {
-            key = this.GetPrimaryKeyString();
             historyRepo = history;
             runnerExecutablePathname = configuration.GetValue<string>(ConstConfigKeys.RunnerExecutablePathname);
         }
 
         public override async Task OnActivateAsync()
         {
+            key = this.GetPrimaryKeyString();
             var history = await historyRepo.GetJobHistory(key);
             if(history != null) status = historyRepo.DeserializeDetails(history);
         }

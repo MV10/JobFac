@@ -40,7 +40,7 @@ namespace JobFac.runtime
                 throw new Exception($"Job definition {id} does not support startup payloads");
 
             var jobInstanceKey = Guid.NewGuid().ToString();
-            var jobGrain = clusterClient.GetGrain<Job>(jobInstanceKey);
+            var jobGrain = clusterClient.GetGrain<IJob>(jobInstanceKey);
             await jobGrain.Start(jobDefinition, options);
 
             return jobInstanceKey;

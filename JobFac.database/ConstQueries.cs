@@ -19,19 +19,19 @@ namespace JobFac.database
         public static readonly string PurgeHistory = "DELETE FROM JobHistory WHERE DeleteAfter < @Now; DELETE FROM SequenceHistory WHERE DeleteAfter < @Now;";
 
         public static readonly string InsertJobHistory = @"INSERT INTO JobHistory 
-        (InstanceKey, DefintionId, LastUpdated, DeleteAfter, FinalRunStatus, ExitCode, FullDetailsJson)
-        VALUES (@InstanceKey, @DefintionId, @LastUpdated, @DeleteAfter, @FinalRunStatus, @ExitCode, @FullDetailsJson);";
+        (InstanceKey, DefinitionId, LastUpdated, DeleteAfter, FinalRunStatus, ExitCode, FullDetailsJson)
+        VALUES (@InstanceKey, @DefinitionId, @LastUpdated, @DeleteAfter, @FinalRunStatus, @ExitCode, @FullDetailsJson);";
 
         public static readonly string InsertSequenceHistory = @"INSERT INTO SequenceHistory 
-        (InstanceKey, DefintionId, LastUpdated, DeleteAfter, FinalRunStatus, FullDetailsJson)
-        VALUES (@InstanceKey, @DefintionId, @LastUpdated, @DeleteAfter, @FinalRunStatus, @FullDetailsJson);";
+        (InstanceKey, DefinitionId, LastUpdated, DeleteAfter, FinalRunStatus, FullDetailsJson)
+        VALUES (@InstanceKey, @DefinitionId, @LastUpdated, @DeleteAfter, @FinalRunStatus, @FullDetailsJson);";
 
         public static readonly string UpdateJobHistory = @"UPDATE JobHistory SET
-        InstanceKey = @InstanceKey, DefintionId = @DefintionId, LastUpdated = @LastUpdated, 
+        InstanceKey = @InstanceKey, DefinitionId = @DefinitionId, LastUpdated = @LastUpdated, 
         DeleteAfter = @DeleteAfter, FinalRunStatus = @FinalRunStatus, ExitCode = @ExitCode, FullDetailsJson = @FullDetailsJson;";
 
         public static readonly string UpdateSequenceHistory = @"UPDATE SequenceHistory SET
-        InstanceKey = @InstanceKey, DefintionId = @DefintionId, LastUpdated = @LastUpdated, 
+        InstanceKey = @InstanceKey, DefinitionId = @DefinitionId, LastUpdated = @LastUpdated, 
         DeleteAfter = @DeleteAfter, FinalRunStatus = @FinalRunStatus, FullDetailsJson = @FullDetailsJson;";
     }
 }

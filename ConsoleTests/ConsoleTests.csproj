@@ -10,11 +10,13 @@
     <PackageReference Include="Microsoft.Extensions.Configuration.FileExtensions" Version="3.1.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="3.1.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="3.1.0" />
+    <PackageReference Include="Microsoft.Orleans.Core" Version="3.0.2" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\JobFac.database\JobFac.database.csproj" />
     <ProjectReference Include="..\JobFac.lib\JobFac.lib.csproj" />
+    <ProjectReference Include="..\JobFac.services\JobFac.services.csproj" />
   </ItemGroup>
 
   <ItemGroup>

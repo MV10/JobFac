@@ -46,9 +46,11 @@ namespace DevConsoleHost
                     .AddConsole();
                 });
 
-                host.ConfigureServices(services =>
+                host.ConfigureServices((hostContext, services) =>
                 {
+                    services.AddSingleton(hostContext.Configuration);
                     services.AddLogging();
+                    services.AddDatabaseServices();
                 });
 
                 await host.RunConsoleAsync();
