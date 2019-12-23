@@ -4,24 +4,23 @@ namespace JobFac.lib.DataModels
 {
     public class JobStatus
     {
-        public string Key { get; set; }
-        public FactoryStartOptions StartOptions { get; set; }
-        public DateTimeOffset StateDataPurgeTarget { get; set; }
+        public string Key { get; set; } = string.Empty;
+        public FactoryStartOptions StartOptions { get; set; } = null;
 
-        public string SequenceDefinitionId { get; set; }
-        public string SequenceKey { get; set; }
-        public int SequenceStep { get; set; }
+        public string SequenceDefinitionId { get; set; } = string.Empty;
+        public string SequenceKey { get; set; } = string.Empty;
+        public int SequenceStep { get; set; } = 0;
 
-        public RunStatus RunStatus { get; set; }
-        public DateTimeOffset LastUpdated { get; set; }
-        public DateTimeOffset StartRequested { get; set; }
-        public DateTimeOffset ExitStateReceived { get; set; }
+        public RunStatus RunStatus { get; set; } = RunStatus.Unknown;
+        public DateTimeOffset LastUpdated { get; set; } = DateTimeOffset.MinValue;
+        public DateTimeOffset StartRequested { get; set; } = DateTime.MinValue;
+        public DateTimeOffset ExitStateReceived { get; set; } = DateTimeOffset.MinValue;
 
-        public bool HasStarted { get; set; }
-        public bool HasExited { get; set; }
-        public bool HasFailed { get; set; }
+        public bool HasStarted { get; set; } = false;
+        public bool HasExited { get; set; } = false;
+        public bool HasFailed { get; set; } = false;
 
-        public int ExitCode { get; set; }
-        public string ExitMessage { get; set; }
+        public int ExitCode { get; set; } = 0;
+        public string ExitMessage { get; set; } = string.Empty;
     }
 }

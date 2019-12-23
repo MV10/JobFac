@@ -44,10 +44,7 @@ namespace ConsoleTests
 
                 var options = new FactoryStartOptions
                 {
-                    DefinitionId = "Sample.JobFac.unaware",
-                    NotificationScope = NotificationScope.None,
-                    ReplacementArguments = new System.Collections.Generic.Dictionary<string, string>(),
-                    StartupPayloads = new System.Collections.Generic.Dictionary<string, string>()
+                    DefinitionId = "Sample.JobFac.unaware"
                 };
 
                 Console.WriteLine("Starting 45-second job: Sample.JobFac.unaware");

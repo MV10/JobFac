@@ -47,11 +47,7 @@ namespace JobFac.runtime
             {
                 Key = jobInstanceKey,
                 StartOptions = options,
-                LastUpdated = DateTimeOffset.UtcNow,
-                RunStatus = RunStatus.Unknown,
-                HasStarted = false,
-                HasExited = false,
-                HasFailed = false
+                LastUpdated = DateTimeOffset.UtcNow
             };
             await historyRepo.InsertStatus(status);
 

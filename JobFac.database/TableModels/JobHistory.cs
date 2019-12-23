@@ -5,12 +5,12 @@ namespace JobFac.database
 {
     public class JobHistory
     {
-        public string InstanceKey { get; set; }
-        public string DefinitionId { get; set; }
-        public DateTimeOffset LastUpdated { get; set; }
-        public DateTimeOffset DeleteAfter { get; set; }
-        public RunStatus FinalRunStatus { get; set; }
-        public int ExitCode { get; set; }
-        public string FullDetailsJson { get; set; }
+        public string InstanceKey { get; set; } = string.Empty;
+        public string DefinitionId { get; set; } = string.Empty;
+        public DateTimeOffset LastUpdated { get; set; } = DateTimeOffset.MinValue;
+        public DateTimeOffset DeleteAfter { get; set; } = DateTimeOffset.MaxValue;
+        public RunStatus FinalRunStatus { get; set; } = RunStatus.Unknown;
+        public int ExitCode { get; set; } = 0;
+        public string FullDetailsJson { get; set; } = string.Empty;
     }
 }
