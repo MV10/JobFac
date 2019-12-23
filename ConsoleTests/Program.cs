@@ -66,7 +66,7 @@ namespace ConsoleTests
                     {
                         var status = await job.GetStatus();
                         Console.WriteLine($"Status {status.RunStatus} last updated {status.LastUpdated.ToLocalTime()}");
-                        Console.WriteLine("Killing job then sleepint for 5 seconds.");
+                        Console.WriteLine("Killing job then sleeping for 5 seconds.");
                         await job.Stop();
                         await Task.Delay(5000);
                         status = await job.GetStatus();
