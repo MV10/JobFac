@@ -3,10 +3,6 @@
 
 The contents of this repository are a work-in-progress.
 
-Nothing is guaranteed to work at any given moment.
-
-Currently not accepting PRs and only limited interest in issues.
-
 Watch this space for real documentation links.
 
 ## Summary
