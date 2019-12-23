@@ -4,24 +4,24 @@ namespace JobFac.lib.DataModels
 {
     public class JobStatus
     {
-        public string Key;
-        public FactoryStartOptions StartOptions;
-        public DateTimeOffset StateDataPurgeTarget;
+        public string Key { get; set; }
+        public FactoryStartOptions StartOptions { get; set; }
+        public DateTimeOffset StateDataPurgeTarget { get; set; }
 
-        public string SequenceDefinitionId;
-        public string SequenceKey;
-        public int SequenceStep;
+        public string SequenceDefinitionId { get; set; }
+        public string SequenceKey { get; set; }
+        public int SequenceStep { get; set; }
 
-        public RunStatus RunStatus;
-        public DateTimeOffset LastUpdated;
-        public DateTimeOffset StartRequested;
-        public DateTimeOffset ExitStateReceived;
+        public RunStatus RunStatus { get; set; }
+        public DateTimeOffset LastUpdated { get; set; }
+        public DateTimeOffset StartRequested { get; set; }
+        public DateTimeOffset ExitStateReceived { get; set; }
 
-        public bool HasStarted;
-        public bool HasExited;
-        public bool HasFailed;
+        public bool HasStarted { get; set; }
+        public bool HasExited { get; set; }
+        public bool HasFailed { get; set; }
 
-        public int ExitCode;
-        public string ExitMessage;
+        public int ExitCode { get; set; }
+        public string ExitMessage { get; set; }
     }
 }

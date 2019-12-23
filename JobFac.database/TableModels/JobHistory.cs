@@ -5,12 +5,12 @@ namespace JobFac.database
 {
     public class JobHistory
     {
-        public string InstanceKey;
-        public string DefinitionId;
-        public DateTimeOffset LastUpdated;
-        public DateTimeOffset DeleteAfter;
-        public RunStatus FinalRunStatus;
-        public int ExitCode;
-        public string FullDetailsJson;
+        public string InstanceKey { get; set; }
+        public string DefinitionId { get; set; }
+        public DateTimeOffset LastUpdated { get; set; }
+        public DateTimeOffset DeleteAfter { get; set; }
+        public RunStatus FinalRunStatus { get; set; }
+        public int ExitCode { get; set; }
+        public string FullDetailsJson { get; set; }
     }
 }

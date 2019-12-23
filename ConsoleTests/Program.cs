@@ -42,9 +42,33 @@ namespace ConsoleTests
             };
 
             Console.WriteLine("Starting 45-second job: Sample.JobFac.unaware");
-            var key = await factory.StartJob(options);
-            Console.WriteLine($"Job instance key: {key}");
+            var jobKey = await factory.StartJob(options);
+            Console.WriteLine($"Job instance key: {jobKey}");
 
+            var timeout = DateTimeOffset.UtcNow.AddSeconds(90);
+            bool done = false;
+            IJob job = null;
+            while(!done && DateTimeOffset.UtcNow < timeout)
+            {
+                Console.WriteLine("Pausing 10 seconds then reading status.");
+                await Task.Delay(10000);
+
+                if (job == null) job = client.GetGrain<IJob>(jobKey);
+                if (job == null)
+                {
+                    Console.WriteLine("Unable to get job proxy.");
+                    done = true;
+                    break;
+                }
+
+                var status = await job.GetStatus();
+                Console.WriteLine($"Status {status.RunStatus} last updated {status.LastUpdated.ToLocalTime()}");
+                done = status.HasExited;
+            }
+
+            Console.WriteLine("Closing cluster client.");
+            await client.Close();
+            client.Dispose();
         }
 
         static async Task TestGetJobDefinition()
