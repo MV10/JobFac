@@ -4,7 +4,6 @@ using JobFac.services;
 using Orleans;
 using Orleans.Concurrency;
 using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace JobFac.runtime
@@ -12,14 +11,10 @@ namespace JobFac.runtime
     [StatelessWorker]
     public class JobFactory : Grain, IJobFactory
     {
-        private readonly IClusterClient clusterClient;
         private readonly DefinitionsRepository definitionRepo;
 
-        public JobFactory(
-            IClusterClient client,
-            DefinitionsRepository defRepo)
+        public JobFactory(DefinitionsRepository defRepo)
         {
-            clusterClient = client;
             definitionRepo = defRepo;
         }
 
@@ -40,7 +35,7 @@ namespace JobFac.runtime
                 throw new Exception($"Job definition {id} does not support startup payloads");
 
             var jobInstanceKey = Guid.NewGuid().ToString();
-            var jobGrain = clusterClient.GetGrain<IJob>(jobInstanceKey);
+            var jobGrain = GrainFactory.GetGrain<IJob>(jobInstanceKey);
             await jobGrain.Start(jobDefinition, options);
 
             return jobInstanceKey;

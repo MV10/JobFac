@@ -1,5 +1,6 @@
 ﻿using JobFac.lib.DataModels;
 using JobFac.services;
+using System;
 using System.Diagnostics;
 using System.Text;
 using System.Threading;
@@ -50,9 +51,18 @@ namespace JobFac.runner
 
             try
             {
-                if (!proc.Start())
+                try
                 {
-                    await jobService.UpdateExitMessage(RunStatus.StartFailed, -1, "Job failed to start");
+                    // Although Start returns a boolean, it isn't useful to us. The documentation
+                    // says it returns false if a process is reused, which could happen if Process
+                    // was used with the Windows shell to launch a document handler such as Word.
+                    // That isn't a supported use-case. However, it can throw exceptions when, for
+                    // example, the provided ExecutablePathname is invalid.
+                    proc.Start();
+                }
+                catch(Exception ex)
+                {
+                    await jobService.UpdateExitMessage(RunStatus.StartFailed, -1, $"Job failed to start, exception {ex}");
                     return;
                 }
 

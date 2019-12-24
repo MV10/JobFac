@@ -11,7 +11,8 @@ namespace job.JobFac.unaware
             if (args.Length != 1 || !int.TryParse(args[0], out seconds) || seconds < 1)
             {
                 Environment.ExitCode = -1;
-                Console.Error.WriteLine("JobFac-unaware sample requires an argument defining number of seconds to sleep.");
+                Console.Error.WriteLine("JobFac-unaware sample requires a single argument defining number of seconds to sleep.");
+                return;
             }
 
             Console.WriteLine($"Sample sleeping for {seconds} secs in 5 second increments.");

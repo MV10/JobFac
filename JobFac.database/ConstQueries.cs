@@ -33,12 +33,14 @@ namespace JobFac.database
         VALUES (@InstanceKey, @DefinitionId, @LastUpdated, @DeleteAfter, @FinalRunStatus, @FullDetailsJson);";
 
         public static readonly string UpdateJobHistory = @"UPDATE JobHistory SET
-        InstanceKey = @InstanceKey, DefinitionId = @DefinitionId, LastUpdated = @LastUpdated, 
-        DeleteAfter = @DeleteAfter, FinalRunStatus = @FinalRunStatus, ExitCode = @ExitCode, FullDetailsJson = @FullDetailsJson;";
+        DefinitionId = @DefinitionId, LastUpdated = @LastUpdated, DeleteAfter = @DeleteAfter, 
+        FinalRunStatus = @FinalRunStatus, ExitCode = @ExitCode, FullDetailsJson = @FullDetailsJson
+        WHERE InstanceKey = @InstanceKey;";
 
         public static readonly string UpdateSequenceHistory = @"UPDATE SequenceHistory SET
-        InstanceKey = @InstanceKey, DefinitionId = @DefinitionId, LastUpdated = @LastUpdated, 
-        DeleteAfter = @DeleteAfter, FinalRunStatus = @FinalRunStatus, FullDetailsJson = @FullDetailsJson;";
+        DefinitionId = @DefinitionId, LastUpdated = @LastUpdated, DeleteAfter = @DeleteAfter, 
+        FinalRunStatus = @FinalRunStatus, FullDetailsJson = @FullDetailsJson
+        WHERE InstanceKey = @InstanceKey;";
 
         public static readonly string InsertCapturedOutput = @"INSERT INTO CapturedOutput
         (InstanceKey, StdOut, StdErr)

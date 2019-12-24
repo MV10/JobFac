@@ -5,8 +5,6 @@ The contents of this repository are a work-in-progress.
 
 Watch this space for real documentation links.
 
-Status 2019-dec-23: dev-quality host and client can launch jobs and track status to completion.
-
 ## Summary
 
 JobFac runs and manages console programs acting as background or automated processing jobs. 
@@ -28,3 +26,11 @@ The goal is to keep this fully open sourced and free to use, along the same line
 * Dapper 2.0
 * SQL Server 2016+
 
+## Status
+
+2019-dec-24
+* capture and storage of stdout and stderr
+
+2019-dec-23
+* dev-quality host and client test apps
+* can execute jobs and track status to completion
