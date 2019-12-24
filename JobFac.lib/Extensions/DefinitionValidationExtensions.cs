@@ -19,11 +19,17 @@ namespace JobFac.lib.DataModels
             if (def.Username.HasContent() && !def.Password.HasContent())
                 Throw("Password is required when Username is specified");
 
-            if (def.LogStdOut && def.CaptureStdOut)
-                Throw("StdOut can be logged or bulk-updated, but not both");
+            if (def.CaptureStdOut.IsFileBased() && !def.StdOutPathname.HasContent())
+                Throw("StdOutPathname must be set for file-based CaptureStdOut settings");
 
-            if (def.LogStdErr && def.CaptureStdErr)
-                Throw("StdErr can be logged or bulk-updated, but not both");
+            if (def.CaptureStdErr.IsFileBased() && !def.StdErrPathname.HasContent())
+                Throw("StdErrPathname must be set for file-based CaptureStdErr settings");
+
+            if (def.CaptureStdOut.IsTimestampedFile() && !def.StdOutPathname.Contains("*"))
+                Throw("StdOutPathname must contain an asterisk for timestamped-file CaptureStdOut settings");
+
+            if (def.CaptureStdErr.IsTimestampedFile() && !def.StdErrPathname.Contains("*"))
+                Throw("StdErrPathname must contain an asterisk for timestamped-file CaptureStdErr settings");
 
             if (def.RequireMinimumRunTime && def.MinimumRunSeconds < 1)
                 Throw("RequireMinimumRunTime requires MinimumRunSeconds of 1 second or greater");
@@ -84,8 +90,6 @@ namespace JobFac.lib.DataModels
 
             if (opt.NotificationScope != NotificationScope.None && opt.NotificationTargetType != NotificationTargetType.None && !opt.NotificationTarget.HasContent())
                 Throw("setting NotificationTargetType requires a value in NotificationTarget field");
-
-            // TODO disallow null dictionaries?
         }
 
         private static void ThrowIfInvalid(this BaseDefinition def)

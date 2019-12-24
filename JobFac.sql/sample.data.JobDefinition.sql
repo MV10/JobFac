@@ -10,7 +10,7 @@ INSERT INTO [dbo].[JobDefinition]
 [Username], [Password], 
 [StartInSequence], 
 [Arguments], [AllowReplacementArguments], [PrefixJobInstanceIdArgument], 
-[LogStdOut], [LogStdErr], [CaptureStdOut], [CaptureStdErr], 
+[CaptureStdOut], [CaptureStdErr], [StdOutPathname], [StdErrPathname], 
 [RequireMinimumRunTime], [MinimumRunSeconds], [MinimumRunTimeNotificationTargetType], [MinimumRunTimeNotificationTarget], 
 [ObserveMaximumRunTime], [MaximumRunSeconds], [StopLongRunningJob], [MaximumRunTimeNotificationTargetType], [MaximumRunTimeNotificationTarget], 
 [RetryWhenFailed], [OnlyNotifyOnce], [AllowRetryInSequences], [MaximumRetryCount], [RetryDelaySeconds]) 
@@ -22,7 +22,7 @@ N'C:\Source\JobFac\Samples\job.JobFac.unaware\bin\Debug\netcoreapp3.1\job.JobFac
 N'', N'', 
 1, 
 N'45', 1, 0, 
-0, 0, 1, 1, 
+1, 1, N'', N'',
 0, 0, 0, N'', 
 0, 0, 0, 0, N'', 
 0, 1, 0, 0, 0)

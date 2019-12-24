@@ -14,10 +14,10 @@
         public bool AllowReplacementArguments { get; set; } = true;
         public bool PrefixJobInstanceIdArgument { get; set; } = false;
 
-        public bool LogStdOut { get; set; } = false;        // writes to logger
-        public bool LogStdErr { get; set; } = false;
-        public bool CaptureStdOut { get; set; } = false;    // writes to DB
-        public bool CaptureStdErr { get; set; } = false;
+        public JobStreamHandling CaptureStdOut { get; set; } = JobStreamHandling.None;
+        public JobStreamHandling CaptureStdErr { get; set; } = JobStreamHandling.None;
+        public string StdOutPathname { get; set; } = string.Empty; // put * in the filename if timestamp-replacement is specified
+        public string StdErrPathname { get; set; } = string.Empty;
 
         // TODO add stdout and stderr paths
 
