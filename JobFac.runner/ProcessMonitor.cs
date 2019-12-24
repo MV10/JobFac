@@ -14,6 +14,9 @@ namespace JobFac.runner
             var tokenSource = new CancellationTokenSource();
             var token = tokenSource.Token;
 
+            StringBuilder capturedStdOut = new StringBuilder();
+            StringBuilder capturedStdErr = new StringBuilder();
+
             var proc = new Process();
             proc.StartInfo.FileName = jobDef.ExecutablePathname;
             proc.StartInfo.WorkingDirectory = jobDef.WorkingDirectory;
@@ -33,19 +36,14 @@ namespace JobFac.runner
             //{
             //}
 
-            StringBuilder capturedStdOut;
-            StringBuilder capturedStdErr;
-
-            if (jobDef.BulkUpdateStdOut)
+            if (jobDef.CaptureStdOut)
             {
-                capturedStdOut = new StringBuilder();
                 proc.StartInfo.RedirectStandardOutput = true;
                 proc.OutputDataReceived += (s, e) => { if (e?.Data != null) capturedStdOut.AppendLine(e.Data); };
             }
 
-            if (jobDef.BulkUpdateStdErr)
+            if (jobDef.CaptureStdErr)
             {
-                capturedStdErr = new StringBuilder();
                 proc.StartInfo.RedirectStandardError = true;
                 proc.ErrorDataReceived += (s, e) => { if (e?.Data != null) capturedStdErr.AppendLine(e.Data); };
             }
@@ -60,10 +58,10 @@ namespace JobFac.runner
 
                 // TODO stdout and stderr logging
 
-                if (jobDef.BulkUpdateStdOut) // || jobDef.LogStdOut)
+                if (jobDef.CaptureStdOut) // || jobDef.LogStdOut)
                     proc.BeginOutputReadLine();
 
-                if (jobDef.BulkUpdateStdErr) // || jobDef.LogStdErr)
+                if (jobDef.CaptureStdErr) // || jobDef.LogStdErr)
                     proc.BeginErrorReadLine();
 
                 await jobService.UpdateRunStatus(RunStatus.Running);
@@ -103,7 +101,8 @@ namespace JobFac.runner
                 tokenSource?.Dispose();
             }
 
-            // TODO write captured StdOut or StdErr to database
+            if (jobDef.CaptureStdOut || jobDef.CaptureStdErr)
+                await jobService.WriteCapturedOutput(jobKey, capturedStdOut.ToString(), capturedStdErr.ToString());
         }
     }
 }

@@ -10,7 +10,7 @@ INSERT INTO [dbo].[JobDefinition]
 [Username], [Password], 
 [StartInSequence], 
 [Arguments], [AllowReplacementArguments], [PrefixJobInstanceIdArgument], 
-[LogStdOut], [LogStdErr], [BulkUpdateStdOut], [BulkUpdateStdErr], 
+[LogStdOut], [LogStdErr], [CaptureStdOut], [CaptureStdErr], 
 [RequireMinimumRunTime], [MinimumRunSeconds], [MinimumRunTimeNotificationTargetType], [MinimumRunTimeNotificationTarget], 
 [ObserveMaximumRunTime], [MaximumRunSeconds], [StopLongRunningJob], [MaximumRunTimeNotificationTargetType], [MaximumRunTimeNotificationTarget], 
 [RetryWhenFailed], [OnlyNotifyOnce], [AllowRetryInSequences], [MaximumRetryCount], [RetryDelaySeconds]) 

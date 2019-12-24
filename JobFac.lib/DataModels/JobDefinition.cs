@@ -14,10 +14,10 @@
         public bool AllowReplacementArguments { get; set; } = true;
         public bool PrefixJobInstanceIdArgument { get; set; } = false;
 
-        public bool LogStdOut { get; set; } = false;          // writes to logger
+        public bool LogStdOut { get; set; } = false;        // writes to logger
         public bool LogStdErr { get; set; } = false;
-        public bool BulkUpdateStdOut { get; set; } = false;  // writes to DB
-        public bool BulkUpdateStdErr { get; set; } = false;
+        public bool CaptureStdOut { get; set; } = false;    // writes to DB
+        public bool CaptureStdErr { get; set; } = false;
 
         // TODO add stdout and stderr paths
 

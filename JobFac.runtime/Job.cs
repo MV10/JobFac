@@ -114,6 +114,12 @@ namespace JobFac.runtime
             await client.ConnectAsync(ConstTimeouts.NamedPipeClientConnectMS);
         }
 
+        public async Task WriteCapturedOutput(string instanceKey, string stdOut, string stdErr)
+        {
+            var dataUtil = GrainFactory.GetGrain<IDataUtilities>(0); // StatelessWorker
+            await dataUtil.WriteCapturedOutput(instanceKey, stdOut, stdErr);
+        }
+
         private async Task LaunchRunner()
         {
             var proc = new Process();

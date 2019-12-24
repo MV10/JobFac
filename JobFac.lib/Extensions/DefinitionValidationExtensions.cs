@@ -19,10 +19,10 @@ namespace JobFac.lib.DataModels
             if (def.Username.HasContent() && !def.Password.HasContent())
                 Throw("Password is required when Username is specified");
 
-            if (def.LogStdOut && def.BulkUpdateStdOut)
+            if (def.LogStdOut && def.CaptureStdOut)
                 Throw("StdOut can be logged or bulk-updated, but not both");
 
-            if (def.LogStdErr && def.BulkUpdateStdErr)
+            if (def.LogStdErr && def.CaptureStdErr)
                 Throw("StdErr can be logged or bulk-updated, but not both");
 
             if (def.RequireMinimumRunTime && def.MinimumRunSeconds < 1)

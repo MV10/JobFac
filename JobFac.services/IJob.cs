@@ -12,5 +12,6 @@ namespace JobFac.services
         Task UpdateRunStatus(RunStatus runStatus);
         Task UpdateExitMessage(RunStatus runStatus, int exitCode, string exitMessage);
         Task Stop();
+        Task WriteCapturedOutput(string instanceKey, string stdOut, string stdErr);
     }
 }

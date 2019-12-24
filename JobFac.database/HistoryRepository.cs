@@ -48,6 +48,17 @@ namespace JobFac.database
         public async Task UpdateStatus(SequenceStatus status)
             => await ExecAsync(ConstQueries.UpdateSequenceHistory, History(status));
 
+        public async Task InsertCapturedOutput(string instanceKey, string stdOut, string stdErr)
+        {
+            var payload = new
+            {
+                InstanceKey = instanceKey,
+                StdOut = stdOut.HasContent() ? stdOut : string.Empty,
+                StdErr = stdErr.HasContent() ? stdErr : string.Empty
+            };
+            await ExecAsync(ConstQueries.InsertCapturedOutput, payload);
+        }
+
         public async Task PurgeHistory()
             => await ExecAsync(ConstQueries.PurgeHistory, new { Now = DateTimeOffset.UtcNow });
 

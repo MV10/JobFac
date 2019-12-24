@@ -4,9 +4,12 @@ DROP TABLE [dbo].[SequenceDefinition];
 DROP TABLE [dbo].[JobHistory];
 DROP TABLE [dbo].[SequenceHistory];
 DROP TABLE [dbo].[StepDefinition];
+DROP TABLE [dbo].[CapturedOutput];
 GO
 
--- No clustered PK, uniqueness and all reads are by Id only
+-- All tables use non-clustered primary keys
+
+-- Uniqueness and all reads are by Id only
 CREATE TABLE [dbo].[JobDefinition]
 (
 	[Id] NVARCHAR(128) NOT NULL, 
@@ -37,8 +40,8 @@ CREATE TABLE [dbo].[JobDefinition]
     [PrefixJobInstanceIdArgument] INT NOT NULL, 
     [LogStdOut] INT NOT NULL, 
     [LogStdErr] INT NOT NULL, 
-    [BulkUpdateStdOut] INT NOT NULL, 
-    [BulkUpdateStdErr] INT NOT NULL, 
+    [CaptureStdOut] INT NOT NULL, 
+    [CaptureStdErr] INT NOT NULL, 
     [RequireMinimumRunTime] INT NOT NULL, 
     [MinimumRunSeconds] INT NOT NULL, 
     [MinimumRunTimeNotificationTargetType] INT NOT NULL, 
@@ -60,7 +63,7 @@ CREATE UNIQUE NONCLUSTERED INDEX IX_JobDefinition ON
 [dbo].[JobDefinition] ([Id] ASC);
 GO
 
--- No clustered PK, uniqueness and all reads are by Id only
+-- Uniqueness and all reads are by Id only
 CREATE TABLE [dbo].[SequenceDefinition]
 (
 	[Id] NVARCHAR(128) NOT NULL, 
@@ -88,7 +91,8 @@ CREATE UNIQUE NONCLUSTERED INDEX IX_SequenceDefinition ON
 [dbo].[SequenceDefinition] ([Id] ASC);
 GO
 
--- No clustered PK, uniqueness and all reads are by InstanceKey
+-- Uniqueness and all reads are by InstanceKey
+-- Also has query index on DefintionId + LastUpdated
 CREATE TABLE [dbo].[JobHistory]
 (
     [InstanceKey] NVARCHAR(128) NOT NULL, 
@@ -109,7 +113,8 @@ CREATE NONCLUSTERED INDEX IX_JobHistoryQuery ON
 [dbo].[JobHistory] ([DefinitionId] ASC, [LastUpdated] ASC);
 GO
 
--- No clustered PK, uniqueness and all reads are by InstanceKey
+-- Uniqueness and all reads are by InstanceKey
+-- Also has query index on DefintionId + LastUpdated
 CREATE TABLE [dbo].[SequenceHistory]
 (
     [InstanceKey] NVARCHAR(128) NOT NULL, 
@@ -129,7 +134,7 @@ CREATE NONCLUSTERED INDEX IX_SequenceHistoryQuery ON
 [dbo].[SequenceHistory] ([DefinitionId] ASC, [LastUpdated] ASC);
 GO
 
--- No clustered PK, uniqueness and all reads are by Id only
+-- Uniqueness and all reads are by SequenceId or SequenceId + Step
 CREATE TABLE [dbo].[StepDefinition]
 (
 	[SequenceId] NVARCHAR(128) NOT NULL, 
@@ -157,4 +162,17 @@ GO
 
 CREATE UNIQUE NONCLUSTERED INDEX IX_StepDefinition ON
 [dbo].[StepDefinition] ([SequenceId] ASC, [Step] ASC);
+GO
+
+-- Uniqueness and all reads are by InstanceKey
+CREATE TABLE [dbo].[CapturedOutput]
+(
+    [InstanceKey] NVARCHAR(128) NOT NULL, 
+    [StdOut] NVARCHAR(MAX) NOT NULL,
+    [StdErr] NVARCHAR(MAX) NOT NULL
+)
+GO
+
+CREATE UNIQUE NONCLUSTERED INDEX IX_CapturedOutput ON
+[dbo].[CapturedOutput] ([InstanceKey] ASC);
 GO

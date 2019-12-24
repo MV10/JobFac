@@ -51,8 +51,8 @@ namespace ConsoleTests
                 var jobKey = await factory.StartJob(options);
                 Console.WriteLine($"Job instance key: {jobKey}");
 
-                //await TestMonitorJob();
-                await TestKillJob();
+                await TestMonitorJob();
+                //await TestKillJob();
 
                 async Task TestKillJob()
                 {
@@ -149,10 +149,8 @@ namespace ConsoleTests
                 // TODO read configuration
                 .UseLocalhostClustering() // cluster and service IDs default to "dev"
 
-                .ConfigureApplicationParts(parts =>
-                {
-                    parts.AddApplicationPart(typeof(IJob).Assembly).WithReferences();
-                })
+                .AddJobFacServicesParts()
+
                 .Build();
 
             // TODO handle exceptions and add retry logic

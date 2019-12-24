@@ -18,8 +18,4 @@
     <ProjectReference Include="..\JobFac.lib\JobFac.lib.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Extensions\" />
-  </ItemGroup>
-
 </Project>

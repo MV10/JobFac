@@ -22,18 +22,13 @@ namespace DevConsoleHost
                 host.UseOrleans(builder =>
                 {
                     builder
-                    
+
                     // TODO use real configuration
                     .UseLocalhostClustering() // cluster and service IDs default to "dev"
-                    
+
                     .Configure<EndpointOptions>(options => options.AdvertisedIPAddress = IPAddress.Loopback)
-                    .ConfigureApplicationParts(parts =>
-                    {
-                        parts.AddApplicationPart(typeof(JobFactory).Assembly).WithReferences();
-                        parts.AddApplicationPart(typeof(Job).Assembly).WithReferences();
-                        parts.AddApplicationPart(typeof(Sequence).Assembly).WithReferences();
-                        //parts.AddApplicationPart(typeof(SchedulerSingleton).Assembly).WithReferences();
-                    });
+
+                    .AddJobFacRuntimeParts();
                 });
 
                 host.ConfigureLogging(builder =>

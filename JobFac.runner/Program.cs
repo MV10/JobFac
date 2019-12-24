@@ -52,11 +52,9 @@ namespace JobFac.runner
 
                 // TODO read configuration
                 .UseLocalhostClustering() // cluster and service IDs default to "dev"
-                
-                .ConfigureApplicationParts(parts =>
-                {
-                    parts.AddApplicationPart(typeof(IJob).Assembly).WithReferences();
-                })
+
+                .AddJobFacServicesParts()
+
                 .Build();
 
             // TODO handle exceptions and add retry logic
