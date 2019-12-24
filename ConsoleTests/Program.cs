@@ -47,7 +47,7 @@ namespace ConsoleTests
                     DefinitionId = "Sample.JobFac.unaware"
                 };
 
-                Console.WriteLine("Starting 45-second job: Sample.JobFac.unaware");
+                Console.WriteLine("Starting sample job: Sample.JobFac.unaware");
                 var jobKey = await factory.StartJob(options);
                 Console.WriteLine($"Job instance key: {jobKey}");
 
@@ -56,8 +56,8 @@ namespace ConsoleTests
 
                 async Task TestKillJob()
                 {
-                    Console.WriteLine("Waiting 25 seconds then will kill job.");
-                    await Task.Delay(25000);
+                    Console.WriteLine("Waiting 15 seconds then will kill job.");
+                    await Task.Delay(15000);
                     var job = client.GetGrain<IJob>(jobKey);
                     if (job != null)
                     {

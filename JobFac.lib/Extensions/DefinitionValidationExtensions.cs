@@ -25,10 +25,10 @@ namespace JobFac.lib.DataModels
             if (def.CaptureStdErr.IsFileBased() && !def.StdErrPathname.HasContent())
                 Throw("StdErrPathname must be set for file-based CaptureStdErr settings");
 
-            if (def.CaptureStdOut.IsTimestampedFile() && !def.StdOutPathname.Contains("*"))
+            if (def.CaptureStdOut == JobStreamHandling.TimestampedFile && !def.StdOutPathname.Contains("*"))
                 Throw("StdOutPathname must contain an asterisk for timestamped-file CaptureStdOut settings");
 
-            if (def.CaptureStdErr.IsTimestampedFile() && !def.StdErrPathname.Contains("*"))
+            if (def.CaptureStdErr == JobStreamHandling.TimestampedFile && !def.StdErrPathname.Contains("*"))
                 Throw("StdErrPathname must contain an asterisk for timestamped-file CaptureStdErr settings");
 
             if (def.RequireMinimumRunTime && def.MinimumRunSeconds < 1)

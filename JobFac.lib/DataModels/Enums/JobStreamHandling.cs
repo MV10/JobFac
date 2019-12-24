@@ -9,8 +9,6 @@ namespace JobFac.lib.DataModels
         // file-based options must come after Logger, see Enum extension
         OverwriteFile,
         AppendFile,
-        // timestamp options must come after AppendFile, see Enum extension
-        OverwriteFileWithTimestamp,
-        AppendFileWithTimestamp
+        TimestampedFile
     }
 }
