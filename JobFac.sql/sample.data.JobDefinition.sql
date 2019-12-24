@@ -9,7 +9,7 @@ INSERT INTO [dbo].[JobDefinition]
 [ExecutablePathname], [WorkingDirectory], 
 [Username], [Password], 
 [StartInSequence], 
-[Arguments], [AllowReplacementArguments], [PrefixJobInstanceIdArgument], 
+[Arguments], [AllowReplacementArguments], [IsJobFacAware], 
 [CaptureStdOut], [CaptureStdErr], [StdOutPathname], [StdErrPathname], 
 [RequireMinimumRunTime], [MinimumRunSeconds], [MinimumRunTimeNotificationTargetType], [MinimumRunTimeNotificationTarget], 
 [ObserveMaximumRunTime], [MaximumRunSeconds], [StopLongRunningJob], [MaximumRunTimeNotificationTargetType], [MaximumRunTimeNotificationTarget], 

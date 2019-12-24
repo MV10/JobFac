@@ -12,7 +12,12 @@
 
         public string Arguments { get; set; } = string.Empty;
         public bool AllowReplacementArguments { get; set; } = true;
-        public bool PrefixJobInstanceIdArgument { get; set; } = false;
+
+        // true implies:
+        // first command-line argument to job is the instance key
+        // can call IJob service to pick up more detailed payload
+        // must call IJob.UpdateExitMessage prior to exiting
+        public bool IsJobFacAware { get; set; } = false;
 
         public JobStreamHandling CaptureStdOut { get; set; } = JobStreamHandling.None;
         public JobStreamHandling CaptureStdErr { get; set; } = JobStreamHandling.None;

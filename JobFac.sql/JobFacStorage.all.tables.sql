@@ -37,7 +37,7 @@ CREATE TABLE [dbo].[JobDefinition]
     [StartInSequence] INT NOT NULL, 
     [Arguments] NVARCHAR(1024) NOT NULL, 
     [AllowReplacementArguments] INT NOT NULL, 
-    [PrefixJobInstanceIdArgument] INT NOT NULL, 
+    [IsJobFacAware] INT NOT NULL, 
     [CaptureStdOut] INT NOT NULL, 
     [CaptureStdErr] INT NOT NULL, 
     [StdOutPathname] NVARCHAR(1024) NOT NULL, 

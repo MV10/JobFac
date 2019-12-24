@@ -30,7 +30,7 @@ namespace JobFac.runner
             proc.StartInfo.CreateNoWindow = true;
 
             // for JobProc-aware jobs, first argument is the job instance key
-            proc.StartInfo.Arguments = (jobDef.PrefixJobInstanceIdArgument) ? $"{jobKey} {jobDef.Arguments}" : jobDef.Arguments;
+            proc.StartInfo.Arguments = (jobDef.IsJobFacAware) ? $"{jobKey} {jobDef.Arguments}" : jobDef.Arguments;
 
             try
             {
@@ -113,7 +113,7 @@ namespace JobFac.runner
                     // TODO check for minimum run-time
 
                     // when true, job is JobProc-aware and should have called UpdateExitMessage
-                    if (!jobDef.PrefixJobInstanceIdArgument)
+                    if (!jobDef.IsJobFacAware)
                     {
                         var finalStatus = (proc.ExitCode < 0) ? RunStatus.Failed : RunStatus.Ended;
                         await jobService.UpdateExitMessage(finalStatus, proc.ExitCode, string.Empty);

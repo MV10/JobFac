@@ -31,7 +31,7 @@ namespace JobFac.runtime
             if (options.ReplacementArguments.ContainsKey(id) && !jobDefinition.AllowReplacementArguments)
                 throw new Exception($"Job definition {id} does not allow replacement arguments");
 
-            if (options.StartupPayloads.ContainsKey(id) && !jobDefinition.PrefixJobInstanceIdArgument)
+            if (options.StartupPayloads.ContainsKey(id) && !jobDefinition.IsJobFacAware)
                 throw new Exception($"Job definition {id} does not support startup payloads");
 
             var jobInstanceKey = Guid.NewGuid().ToString();
