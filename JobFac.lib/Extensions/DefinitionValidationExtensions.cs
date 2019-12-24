@@ -31,12 +31,6 @@ namespace JobFac.lib.DataModels
             if (def.CaptureStdErr == JobStreamHandling.TimestampedFile && !def.StdErrPathname.Contains("*"))
                 Throw("StdErrPathname must contain an asterisk for timestamped-file CaptureStdErr settings");
 
-            if (def.RequireMinimumRunTime && def.MinimumRunSeconds < 1)
-                Throw("RequireMinimumRunTime requires MinimumRunSeconds of 1 second or greater");
-
-            if(def.MinimumRunTimeNotificationTargetType != NotificationTargetType.None && !def.MinimumRunTimeNotificationTarget.HasContent())
-                Throw("setting MinimumRunTimeNotificationTargetType requires a value in MinimumRunTimeNotificationTarget field");
-
             if (def.ObserveMaximumRunTime && def.MaximumRunSeconds < 1)
                 Throw("ObserveMaximumRunTime requires MaximumRunSeconds of 1 second or greater");
 

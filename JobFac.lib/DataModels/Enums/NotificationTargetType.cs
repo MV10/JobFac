@@ -6,6 +6,5 @@
         UriTrigger,     // no data passed
         UriPostStatus,  // posts data
         Email,          // internally generated message
-        // TODO SMS? others?
     }
 }

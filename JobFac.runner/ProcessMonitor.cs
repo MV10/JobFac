@@ -110,8 +110,6 @@ namespace JobFac.runner
                 }
                 else
                 {
-                    // TODO check for minimum run-time
-
                     // when true, job is JobProc-aware and should have called UpdateExitMessage
                     if (!jobDef.IsJobFacAware)
                     {

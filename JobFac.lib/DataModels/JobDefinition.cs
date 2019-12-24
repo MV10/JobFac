@@ -24,13 +24,6 @@
         public string StdOutPathname { get; set; } = string.Empty; // put * in the filename if timestamp-replacement is specified
         public string StdErrPathname { get; set; } = string.Empty;
 
-        // TODO add stdout and stderr paths
-
-        public bool RequireMinimumRunTime { get; set; } = false;
-        public int MinimumRunSeconds { get; set; } = 0;
-        public NotificationTargetType MinimumRunTimeNotificationTargetType { get; set; } = NotificationTargetType.None;
-        public string MinimumRunTimeNotificationTarget { get; set; } = string.Empty;
-
         public bool ObserveMaximumRunTime { get; set; } = false;
         public int MaximumRunSeconds { get; set; } = 0;
         public bool StopLongRunningJob { get; set; } = false;

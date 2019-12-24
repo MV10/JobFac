@@ -11,6 +11,7 @@ namespace JobFac.lib.DataModels
         public string SequenceKey { get; set; } = string.Empty;
         public int SequenceStep { get; set; } = 0;
 
+        public string MachineName { get; set; } = string.Empty;
         public RunStatus RunStatus { get; set; } = RunStatus.Unknown;
         public DateTimeOffset LastUpdated { get; set; } = DateTimeOffset.MinValue;
         public DateTimeOffset StartRequested { get; set; } = DateTime.MinValue;

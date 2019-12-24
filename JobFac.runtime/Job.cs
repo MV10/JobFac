@@ -8,6 +8,7 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Pipes;
+using System.Net;
 using System.Threading.Tasks;
 
 namespace JobFac.runtime
@@ -47,7 +48,8 @@ namespace JobFac.runtime
             {
                 Key = jobInstanceKey,
                 StartOptions = options,
-                LastUpdated = DateTimeOffset.UtcNow
+                LastUpdated = DateTimeOffset.UtcNow,
+                MachineName = Dns.GetHostName().HasContent() ? Dns.GetHostName() : Environment.MachineName
             };
             await historyRepo.InsertStatus(status);
 

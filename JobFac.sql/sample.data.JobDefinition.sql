@@ -11,7 +11,6 @@ INSERT INTO [dbo].[JobDefinition]
 [StartInSequence], 
 [Arguments], [AllowReplacementArguments], [IsJobFacAware], 
 [CaptureStdOut], [CaptureStdErr], [StdOutPathname], [StdErrPathname], 
-[RequireMinimumRunTime], [MinimumRunSeconds], [MinimumRunTimeNotificationTargetType], [MinimumRunTimeNotificationTarget], 
 [ObserveMaximumRunTime], [MaximumRunSeconds], [StopLongRunningJob], [MaximumRunTimeNotificationTargetType], [MaximumRunTimeNotificationTarget], 
 [RetryWhenFailed], [OnlyNotifyOnce], [AllowRetryInSequences], [MaximumRetryCount], [RetryDelaySeconds]) 
 VALUES 
@@ -23,7 +22,6 @@ N'', N'',
 1, 
 N'45', 1, 0, 
 1, 1, N'', N'',
-0, 0, 0, N'', 
 0, 0, 0, 0, N'', 
 0, 1, 0, 0, 0)
 
