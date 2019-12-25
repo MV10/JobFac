@@ -1,7 +1,7 @@
 ﻿
 ## JobFac Sample: job.JobFac.unaware
 
-Demonstrates a job which has no JobFac dependencies. It will be executed and monitored by the JobFac.runner application. It accepts one command-line argument indicating the number of seconds to sleep.
+Demonstrates a job which has no JobFac dependencies. It will be executed and monitored by the JobFac.Services.Runner application. It accepts one command-line argument indicating the number of seconds to sleep.
 
 A run for 15 seconds produces this output:
 

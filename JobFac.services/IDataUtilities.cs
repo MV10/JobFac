@@ -1,8 +1,7 @@
-﻿using JobFac.lib.DataModels;
-using Orleans;
+﻿using Orleans;
 using System.Threading.Tasks;
 
-namespace JobFac.services
+namespace JobFac.Services
 {
     // StatelessWorker grain
     public interface IDataUtilities : IGrainWithIntegerKey

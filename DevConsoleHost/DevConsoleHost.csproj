@@ -12,10 +12,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\JobFac.database\JobFac.database.csproj" />
-    <ProjectReference Include="..\JobFac.lib\JobFac.lib.csproj" />
-    <ProjectReference Include="..\JobFac.runtime\JobFac.runtime.csproj" />
-    <ProjectReference Include="..\JobFac.services\JobFac.services.csproj" />
+    <ProjectReference Include="..\JobFac.Library.Database\JobFac.Library.Database.csproj" />
+    <ProjectReference Include="..\JobFac.Library\JobFac.Library.csproj" />
+    <ProjectReference Include="..\JobFac.Services.Runtime\JobFac.Services.Runtime.csproj" />
   </ItemGroup>
 
   <ItemGroup>

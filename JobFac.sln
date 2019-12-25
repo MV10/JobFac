@@ -3,17 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.29613.14
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JobFac.server", "JobFac.server\JobFac.server.csproj", "{B7581AEB-9508-4D57-B7F8-1CC950B4BA7A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JobFac.Services", "JobFac.Services\JobFac.Services.csproj", "{0C46A093-0971-454B-BAD9-411063848D73}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JobFac.services", "JobFac.services\JobFac.services.csproj", "{0C46A093-0971-454B-BAD9-411063848D73}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JobFac.Library", "JobFac.Library\JobFac.Library.csproj", "{0A27CCB2-9770-4C3F-98D7-7AAF8B27CB6C}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JobFac.lib", "JobFac.lib\JobFac.lib.csproj", "{0A27CCB2-9770-4C3F-98D7-7AAF8B27CB6C}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JobFac.runner", "JobFac.runner\JobFac.runner.csproj", "{F5A215F1-2FEF-4AE9-B1FA-33DA24C66D92}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JobFac.admin", "JobFac.admin\JobFac.admin.csproj", "{EF25F37E-9CC7-499A-89FF-66A1866DF248}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JobFac.ui", "JobFac.ui\JobFac.ui.csproj", "{A90597A5-C29A-4901-91A0-5A9216781F2C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JobFac.Services.Runner", "JobFac.Services.Runner\JobFac.Services.Runner.csproj", "{F5A215F1-2FEF-4AE9-B1FA-33DA24C66D92}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Repository Content", "Repository Content", "{70B09ED2-EBF9-4BC8-A0A5-8B22ED9A3EED}"
 	ProjectSection(SolutionItems) = preProject
@@ -31,13 +25,13 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "job.JobFac.unaware", "Sampl
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "client.app", "Samples\client.app\client.app.csproj", "{C45AA91C-33A9-487F-B6D1-C57D86AAD64A}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JobFac.runtime", "JobFac.runtime\JobFac.runtime.csproj", "{51850F47-41A9-4F5D-97DD-5E406ED6D09D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JobFac.Services.Runtime", "JobFac.Services.Runtime\JobFac.Services.Runtime.csproj", "{51850F47-41A9-4F5D-97DD-5E406ED6D09D}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JobFac.database", "JobFac.database\JobFac.database.csproj", "{4705D18D-D5A5-41B8-A6C4-E3A47C6A368E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JobFac.Library.Database", "JobFac.Library.Database\JobFac.Library.Database.csproj", "{4705D18D-D5A5-41B8-A6C4-E3A47C6A368E}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ConsoleTests", "ConsoleTests\ConsoleTests.csproj", "{B223F72A-15CB-40A8-849A-186233D8BE2F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DevConsoleHost", "DevConsoleHost\DevConsoleHost.csproj", "{44530D15-6C0D-4E11-9C7C-A3C40269A4D7}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DevConsoleHost", "DevConsoleHost\DevConsoleHost.csproj", "{44530D15-6C0D-4E11-9C7C-A3C40269A4D7}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -45,10 +39,6 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{B7581AEB-9508-4D57-B7F8-1CC950B4BA7A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{B7581AEB-9508-4D57-B7F8-1CC950B4BA7A}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{B7581AEB-9508-4D57-B7F8-1CC950B4BA7A}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{B7581AEB-9508-4D57-B7F8-1CC950B4BA7A}.Release|Any CPU.Build.0 = Release|Any CPU
 		{0C46A093-0971-454B-BAD9-411063848D73}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{0C46A093-0971-454B-BAD9-411063848D73}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0C46A093-0971-454B-BAD9-411063848D73}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -61,14 +51,6 @@ Global
 		{F5A215F1-2FEF-4AE9-B1FA-33DA24C66D92}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F5A215F1-2FEF-4AE9-B1FA-33DA24C66D92}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F5A215F1-2FEF-4AE9-B1FA-33DA24C66D92}.Release|Any CPU.Build.0 = Release|Any CPU
-		{EF25F37E-9CC7-499A-89FF-66A1866DF248}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{EF25F37E-9CC7-499A-89FF-66A1866DF248}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{EF25F37E-9CC7-499A-89FF-66A1866DF248}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{EF25F37E-9CC7-499A-89FF-66A1866DF248}.Release|Any CPU.Build.0 = Release|Any CPU
-		{A90597A5-C29A-4901-91A0-5A9216781F2C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{A90597A5-C29A-4901-91A0-5A9216781F2C}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{A90597A5-C29A-4901-91A0-5A9216781F2C}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{A90597A5-C29A-4901-91A0-5A9216781F2C}.Release|Any CPU.Build.0 = Release|Any CPU
 		{239E40B8-80A3-4BC7-872E-6AB485B838AC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{239E40B8-80A3-4BC7-872E-6AB485B838AC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{239E40B8-80A3-4BC7-872E-6AB485B838AC}.Release|Any CPU.Build.0 = Release|Any CPU

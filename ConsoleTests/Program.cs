@@ -1,6 +1,6 @@
-﻿using JobFac.database;
-using JobFac.lib.DataModels;
-using JobFac.services;
+﻿using JobFac.Library.Database;
+using JobFac.Library.DataModels;
+using JobFac.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Orleans;
@@ -134,7 +134,7 @@ namespace ConsoleTests
             return servicesBuilder;
         }
 
-        // cribbed from JobFac.runner
+        // cribbed from JobFac.Services.Runner
         static async Task<IClusterClient> GetClusterClient()
         {
             var client = new ClientBuilder()
