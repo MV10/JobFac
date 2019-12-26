@@ -28,6 +28,11 @@ The goal is to keep this fully open sourced and free to use, along the same line
 
 ## Status
 
+2019-dec-26
+* added service provider to hide Orleans dependencies from client apps
+* added Generic Host support including clean Orleans client shutdown
+* migrating test apps and Runner to Generic Host for cleaner architecture
+
 2019-dec-25
 * overhauled namespaces and projects (and lost git history...)
 
