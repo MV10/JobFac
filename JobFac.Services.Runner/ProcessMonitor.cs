@@ -1,18 +1,60 @@
 ﻿using JobFac.Library;
 using JobFac.Library.DataModels;
-using JobFac.Services;
+using Microsoft.Extensions.Hosting;
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.IO.Pipes;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace JobFac.Services.Runner
 {
-    public static class ProcessMonitor
+    public class ProcessMonitor : IHostedService
     {
-        public static async Task RunJob(IJob jobService, JobDefinition jobDef, string jobKey)
+        private readonly IHostApplicationLifetime appLifetime;
+        private readonly IJobFacServiceProvider jobFacServices;
+
+        public ProcessMonitor(
+            IHostApplicationLifetime appLifetime,
+            IJobFacServiceProvider jobFacServices)
+        {
+            this.appLifetime = appLifetime;
+            this.jobFacServices = jobFacServices;
+        }
+
+        public Task StartAsync(CancellationToken cancellationToken)
+        {
+            // since this is an event handler, the lambda's async void is acceptable
+            appLifetime.ApplicationStarted.Register(async () => await ExecuteAsync());
+            return Task.CompletedTask;
+        }
+
+        public Task StopAsync(CancellationToken cancellationToken)
+            => Task.CompletedTask;
+
+        private async Task ExecuteAsync()
+        {
+            var jobService = jobFacServices.GetJob(Program.JobInstanceKey);
+            if (jobService == null)
+                throw new Exception($"Unable to connect to job service (instance {Program.JobInstanceKey}");
+
+            try
+            {
+                await jobService.UpdateRunStatus(RunStatus.StartRequested);
+                var jobDef = await jobService.GetDefinition();
+                await RunJob(jobService, jobDef);
+            }
+            catch (Exception ex)
+            {
+                await jobService.UpdateExitMessage(RunStatus.Unknown, -1, $"JobFac.Services.Runner exception {ex}");
+            }
+
+            appLifetime.StopApplication();
+        }
+
+        private async Task RunJob(IJob jobService, JobDefinition jobDef)
         {
             var tokenSource = new CancellationTokenSource();
             var token = tokenSource.Token;
@@ -30,7 +72,7 @@ namespace JobFac.Services.Runner
             proc.StartInfo.CreateNoWindow = true;
 
             // for JobProc-aware jobs, first argument is the job instance key
-            proc.StartInfo.Arguments = (jobDef.IsJobFacAware) ? $"{jobKey} {jobDef.Arguments}" : jobDef.Arguments;
+            proc.StartInfo.Arguments = (jobDef.IsJobFacAware) ? $"{Program.JobInstanceKey} {jobDef.Arguments}" : jobDef.Arguments;
 
             try
             {
@@ -99,8 +141,8 @@ namespace JobFac.Services.Runner
 
                 await Task.WhenAny
                     (
-                        WaitForExitAsync.Wait(proc, token),
-                        KillCommand.MonitorNamedPipe(jobKey, token)
+                        WaitForProcessExitAsync(proc, token),
+                        MonitorKillCommandNamedPipe(token)
                     ).ConfigureAwait(false);
 
                 if (!proc.HasExited)
@@ -121,8 +163,8 @@ namespace JobFac.Services.Runner
 
                 tokenSource.Cancel();
 
-                // The Process WaitForExit call without a timeout value is the only way to
-                // asynchronously wait for the streams to drain.
+                // The Process WaitForExit call without a timeout value is the
+                // only way to asynchronously wait for the streams to drain.
                 if (jobDef.CaptureStdOut != JobStreamHandling.None || jobDef.CaptureStdErr != JobStreamHandling.None)
                     proc.WaitForExit();
             }
@@ -144,7 +186,44 @@ namespace JobFac.Services.Runner
             }
 
             if (jobDef.CaptureStdOut == JobStreamHandling.Database || jobDef.CaptureStdErr == JobStreamHandling.Database)
-                await jobService.WriteCapturedOutput(jobKey, dbStdOut.ToString(), dbStdErr.ToString());
+                await jobService.WriteCapturedOutput(Program.JobInstanceKey, dbStdOut.ToString(), dbStdErr.ToString());
         }
+
+        private async Task WaitForProcessExitAsync(Process proc, CancellationToken token = default)
+        {
+            var completion = new TaskCompletionSource<bool>();
+            proc.EnableRaisingEvents = true;
+            proc.Exited += CompleteTaskOnExit;
+            try
+            {
+                if (proc.HasExited) return;
+                using var reg = token.Register(() => Task.Run(() => completion.SetCanceled()));
+                await completion.Task;
+            }
+            finally
+            {
+                proc.Exited -= CompleteTaskOnExit;
+            }
+
+            void CompleteTaskOnExit(object s, EventArgs e)
+                => Task.Run(() => completion.TrySetResult(true));
+        }
+
+        // If this task exits, that means the Job service connected to this named pipe to request a process-kill
+        private async Task MonitorKillCommandNamedPipe(CancellationToken token)
+        {
+            NamedPipeServerStream server = null;
+            try
+            {
+                server = new NamedPipeServerStream(Program.JobInstanceKey, PipeDirection.In, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous);
+                await server.WaitForConnectionAsync(token);
+                server.Disconnect();
+            }
+            finally
+            {
+                server?.Dispose();
+            }
+        }
+
     }
 }
