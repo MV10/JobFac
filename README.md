@@ -11,7 +11,7 @@ JobFac runs and manages console programs acting as background or automated proce
 
 Jobs launch on a scheduled basis or on-demand via service calls. Single-server or even local implementation is possible, but the primary use-case is job-execution load balanced across a self-managing server cluster. The system includes the usual monitoring, notification, and reporting features found in systems like this.
 
-Job interaction is available to client applications through an HTTP-based API. While a .NET client application could take advantage of binary-level connectivity to the job services, a system of this nature does not typically require such convenience/performance tradeoffs.
+Job interaction is available to client applications through an HTTP-based API. While a .NET client application could take advantage of binary-level connectivity to the job services, a system of this nature does not typically require such convenience/performance tradeoffs. (The legacy .NET Framework is not supported except as a job client issuing HTTP-based API calls.)
 
 There is also a sequencing system which can launch and control a series of jobs with conditional start rules at each step and branching features based on job outcome (success, failure, mixed). Sequences can also be scheduled or started on-demand and can provide altered arguments or JobFac payloads to any of the jobs in the sequence.
 
@@ -30,6 +30,7 @@ The goal is to keep this fully open sourced and free to use, along the same line
 
 2019-dec-27
 * job "already running" options implemented
+* remote-access to JobFac server's ILogger (Runner is a separate process)
 
 2019-dec-26
 * added service provider to hide Orleans dependencies from client apps

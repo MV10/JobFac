@@ -9,7 +9,7 @@ namespace JobFac.Services
 {
     public static class AddJobFacClientGenericHostExtension
     {
-        public static async Task<IHostBuilder> AddJobFacClientAsync(this IHostBuilder hostBuilder)
+        public static async Task<IHostBuilder> AddJobFacClientAsync(this IHostBuilder hostBuilder, bool addIClusterClient = false)
         {
             // Nasty bit of code to "borrow" a copy of HostBulderContext so we can use it with await
             // instead of followng the normal ConfigureServices lambda pattern, like this:
@@ -33,6 +33,7 @@ namespace JobFac.Services
             {
                 services.AddSingleton<IJobFacServiceProvider>(new JobFacServiceProvider(orleansClient));
                 services.AddHostedService<ClusterClientHostedService>();
+                if (addIClusterClient) services.AddSingleton(orleansClient);
             });
 
             return hostBuilder;

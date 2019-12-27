@@ -18,6 +18,16 @@ namespace DevConsoleHost
             {
                 var host = Host.CreateDefaultBuilder(args);
 
+                host.ConfigureLogging(builder =>
+                {
+                    builder
+                    .AddFilter("Microsoft", LogLevel.Warning)   // generic host lifecycle messages
+                    .AddFilter("Orleans", LogLevel.Warning)     // suppress status dumps
+                    .AddFilter("Runtime", LogLevel.Warning)     // also an Orleans prefix
+                    .AddDebug()                                 // VS Debug window
+                    .AddConsole();
+                });
+
                 host.UseOrleans(builder =>
                 {
                     builder
@@ -30,20 +40,11 @@ namespace DevConsoleHost
                     .AddJobFacRuntimeParts();
                 });
 
-                host.ConfigureLogging(builder =>
-                {
-                    builder
-                    .AddFilter("Microsoft", LogLevel.Warning)   // generic host lifecycle messages
-                    .AddFilter("Orleans", LogLevel.Warning)     // suppress status dumps
-                    .AddFilter("Runtime", LogLevel.Warning)     // also an Orleans prefix
-                    .AddDebug()                                 // VS Debug window
-                    .AddConsole();
-                });
-
                 host.ConfigureServices((hostContext, services) =>
                 {
-                    services.AddSingleton(hostContext.Configuration);
                     services.AddLogging();
+
+                    services.AddSingleton(hostContext.Configuration); // required by database services
                     services.AddDatabaseServices();
                 });
 

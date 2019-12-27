@@ -1,6 +1,7 @@
 ﻿using JobFac.Library;
 using JobFac.Library.DataModels;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -13,19 +14,23 @@ namespace JobFac.Services.Runner
 {
     public class ProcessMonitor : IHostedService
     {
+        private readonly ILogger<ProcessMonitor> logger;
         private readonly IHostApplicationLifetime appLifetime;
         private readonly IJobFacServiceProvider jobFacServices;
 
         public ProcessMonitor(
+            ILogger<ProcessMonitor> logger,
             IHostApplicationLifetime appLifetime,
             IJobFacServiceProvider jobFacServices)
         {
+            this.logger = logger;
             this.appLifetime = appLifetime;
             this.jobFacServices = jobFacServices;
         }
 
         public Task StartAsync(CancellationToken cancellationToken)
         {
+            logger.LogInformation($"Runner starting, job instance {Program.JobInstanceKey}");
             // since this is an event handler, the lambda's async void is acceptable
             appLifetime.ApplicationStarted.Register(async () => await ExecuteAsync());
             return Task.CompletedTask;
@@ -36,6 +41,7 @@ namespace JobFac.Services.Runner
 
         private async Task ExecuteAsync()
         {
+            logger.LogInformation($"Execution starting");
             var jobService = jobFacServices.GetJob(Program.JobInstanceKey);
             if (jobService == null)
                 throw new Exception($"Unable to connect to job service (instance {Program.JobInstanceKey}");
@@ -48,14 +54,18 @@ namespace JobFac.Services.Runner
             }
             catch (Exception ex)
             {
+                logger.LogError($"ExecuteAsync {ex}");
                 await jobService.UpdateExitMessage(RunStatus.Unknown, -1, $"JobFac.Services.Runner exception {ex}");
             }
 
+            logger.LogInformation($"Execution ending, calling StopApplication after log-flush delay");
+            await Task.Delay(10000);
             appLifetime.StopApplication();
         }
 
         private async Task RunJob(IJob jobService, JobDefinition jobDef)
         {
+            logger.LogInformation($"RunJob starting");
             var tokenSource = new CancellationTokenSource();
             var token = tokenSource.Token;
 
@@ -116,6 +126,7 @@ namespace JobFac.Services.Runner
                     }
                 }
 
+                logger.LogInformation($"RunJob calling Process.Start");
                 try
                 {
                     // Although Start returns a boolean, it isn't useful to us. The documentation
@@ -139,11 +150,14 @@ namespace JobFac.Services.Runner
 
                 // TODO implement maximum run-time token cancellation
 
+                logger.LogInformation($"RunJob awaiting process exit or kill command");
                 await Task.WhenAny
                     (
                         WaitForProcessExitAsync(proc, token),
                         MonitorKillCommandNamedPipe(token)
                     ).ConfigureAwait(false);
+                logger.LogInformation($"RunJob await exited, Process.HasExited? {proc.HasExited}");
+
 
                 if (!proc.HasExited)
                 {
@@ -161,6 +175,7 @@ namespace JobFac.Services.Runner
                     // TODO play it safe and retrieve status and verify JobProc-aware job actually set an exit message?
                 }
 
+                logger.LogInformation($"RunJob cancelling token");
                 tokenSource.Cancel();
 
                 // The Process WaitForExit call without a timeout value is the
@@ -170,27 +185,34 @@ namespace JobFac.Services.Runner
             }
             catch(Exception ex)
             {
-                // TODO log exceptions
+                logger.LogError($"RunJob caught exception {ex}");
             }
             finally
             {
+                logger.LogInformation($"RunJob finalizing");
+
+                tokenSource?.Cancel();
                 proc?.Close();
-                proc?.Dispose();
 
                 tokenSource?.Dispose();
+                proc?.Dispose();
 
                 fileStdOut?.Close();
                 fileStdErr?.Close();
+
                 fileStdOut?.Dispose();
                 fileStdErr?.Dispose();
             }
 
             if (jobDef.CaptureStdOut == JobStreamHandling.Database || jobDef.CaptureStdErr == JobStreamHandling.Database)
                 await jobService.WriteCapturedOutput(Program.JobInstanceKey, dbStdOut.ToString(), dbStdErr.ToString());
+
+            logger.LogInformation($"RunJob exiting");
         }
 
         private async Task WaitForProcessExitAsync(Process proc, CancellationToken token = default)
         {
+            logger.LogInformation($"WaitForExit starting");
             var completion = new TaskCompletionSource<bool>();
             proc.EnableRaisingEvents = true;
             proc.Exited += CompleteTaskOnExit;
@@ -204,6 +226,7 @@ namespace JobFac.Services.Runner
             {
                 proc.Exited -= CompleteTaskOnExit;
             }
+            logger.LogInformation($"WaitForExit exiting");
 
             void CompleteTaskOnExit(object s, EventArgs e)
                 => Task.Run(() => completion.TrySetResult(true));
@@ -212,6 +235,7 @@ namespace JobFac.Services.Runner
         // If this task exits, that means the Job service connected to this named pipe to request a process-kill
         private async Task MonitorKillCommandNamedPipe(CancellationToken token)
         {
+            logger.LogInformation($"KillCommand starting");
             NamedPipeServerStream server = null;
             try
             {
@@ -223,7 +247,7 @@ namespace JobFac.Services.Runner
             {
                 server?.Dispose();
             }
+            logger.LogInformation($"KillCommand exiting");
         }
-
     }
 }
