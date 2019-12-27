@@ -21,7 +21,7 @@ namespace JobFac.Services.Runner
             var host = Host.CreateDefaultBuilder(args);
             await host.AddJobFacClientAsync();
             host.ConfigureServices((ctx, svc) => svc.AddHostedService<ProcessMonitor>());
-            await host.RunConsoleAsync();
+            await host.StartAsync();
         }
     }
 }

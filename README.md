@@ -26,7 +26,10 @@ The goal is to keep this fully open sourced and free to use, along the same line
 * Dapper 2.0
 * SQL Server 2016+
 
-## Status
+## Features Implemented
+
+2019-dec-27
+* job "already running" options implemented
 
 2019-dec-26
 * added service provider to hide Orleans dependencies from client apps

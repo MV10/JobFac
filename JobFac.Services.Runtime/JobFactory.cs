@@ -1,9 +1,10 @@
-﻿using JobFac.Library.Database;
+﻿using JobFac.Library;
+using JobFac.Library.Database;
 using JobFac.Library.DataModels;
-using JobFac.Services;
 using Orleans;
 using Orleans.Concurrency;
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace JobFac.Services.Runtime
@@ -12,10 +13,14 @@ namespace JobFac.Services.Runtime
     public class JobFactory : Grain, IJobFactory
     {
         private readonly DefinitionsRepository definitionRepo;
+        private readonly HistoryRepository historyRepo;
 
-        public JobFactory(DefinitionsRepository defRepo)
+        public JobFactory(
+            DefinitionsRepository definitionRepo,
+            HistoryRepository historyRepo)
         {
-            definitionRepo = defRepo;
+            this.definitionRepo = definitionRepo;
+            this.historyRepo = historyRepo;
         }
 
         public async Task<string> StartJob(FactoryStartOptions options)
@@ -32,9 +37,30 @@ namespace JobFac.Services.Runtime
                 throw new Exception($"Job definition {id} does not allow replacement arguments");
 
             if (options.StartupPayloads.ContainsKey(id) && !jobDefinition.IsJobFacAware)
-                throw new Exception($"Job definition {id} does not support startup payloads");
+                throw new Exception($"Job definition {id} not JobFac-aware and doesnt support startup payloads");
 
-            var jobInstanceKey = Guid.NewGuid().ToString();
+            if (jobDefinition.AlreadyRunningAction != AlreadyRunningAction.StartNormally)
+            {
+                var instances = await historyRepo.GetActiveJobInstanceIds(id);
+                if(instances.Count > 0)
+                {
+                    // TODO job-already-running notifications
+
+                    if (jobDefinition.AlreadyRunningAction == AlreadyRunningAction.DoNotStart)
+                        throw new Exception($"Job definition {id} is already running and is not configured to start additional instances");
+
+                    if(jobDefinition.AlreadyRunningAction == AlreadyRunningAction.StopOthersBeforeStarting)
+                    {
+                        foreach(var key in instances)
+                        {
+                            var otherJob = GrainFactory.GetGrain<IJob>(key);
+                            await otherJob.Stop();
+                        }
+                    }
+                }
+            }
+
+            var jobInstanceKey = Formatting.NewInstanceKey;
             var jobGrain = GrainFactory.GetGrain<IJob>(jobInstanceKey);
             await jobGrain.Start(jobDefinition, options);
 
@@ -47,8 +73,26 @@ namespace JobFac.Services.Runtime
 
             // TODO actually start a sequence
 
-            var sequenceInstanceKey = Guid.NewGuid().ToString();
+            var sequenceInstanceKey = Formatting.NewInstanceKey;
             return sequenceInstanceKey;
+        }
+
+        public async Task<IReadOnlyList<string>> GetRunningJobInstanceIds(string definitionId)
+        {
+            var jobDefinition = await definitionRepo.GetJobDefinition(definitionId);
+            if (jobDefinition == null)
+                throw new Exception("Invalid job definition id");
+
+            return await historyRepo.GetActiveJobInstanceIds(definitionId);
+        }
+
+        public async Task<IReadOnlyList<string>> GetRunningSequenceInstanceIds(string definitionId)
+        {
+            var jobDefinition = await definitionRepo.GetSequenceDefinition(definitionId);
+            if (jobDefinition == null)
+                throw new Exception("Invalid sequence definition id");
+
+            return await historyRepo.GetActiveSequenceInstanceIds(definitionId);
         }
     }
 }

@@ -19,7 +19,9 @@ CREATE TABLE [dbo].[JobDefinition]
     [IsStartDisabled] INT NOT NULL, 
     [StartOnDemand] INT NOT NULL, 
     [StartBySchedule] INT NOT NULL, 
-    [AllowOverlappingStartup] INT NOT NULL, 
+    [AlreadyRunningAction] INT NOT NULL, 
+    [AlreadyRunningNotificationTargetType] INT NOT NULL, 
+    [AlreadyRunningNotificationTarget] NVARCHAR(1024) NOT NULL, 
     [ScheduleDateMode] INT NOT NULL, 
     [ScheduleTimeMode] INT NOT NULL, 
     [ScheduleDates] NVARCHAR(128) NOT NULL, 
@@ -69,7 +71,9 @@ CREATE TABLE [dbo].[SequenceDefinition]
     [IsStartDisabled] INT NOT NULL, 
     [StartOnDemand] INT NOT NULL, 
     [StartBySchedule] INT NOT NULL, 
-    [AllowOverlappingStartup] INT NOT NULL, 
+    [AlreadyRunningAction] INT NOT NULL, 
+    [AlreadyRunningNotificationTargetType] INT NOT NULL, 
+    [AlreadyRunningNotificationTarget] NVARCHAR(1024) NOT NULL, 
     [ScheduleDateMode] INT NOT NULL, 
     [ScheduleTimeMode] INT NOT NULL, 
     [ScheduleDates] NVARCHAR(128) NOT NULL, 
@@ -109,6 +113,10 @@ CREATE NONCLUSTERED INDEX IX_JobHistoryQuery ON
 [dbo].[JobHistory] ([DefinitionId] ASC, [LastUpdated] ASC);
 GO
 
+CREATE NONCLUSTERED INDEX IX_JobHistoryActive ON
+[dbo].[JobHistory] ([DefinitionId] ASC, [FinalRunStatus] ASC);
+GO
+
 -- Uniqueness and all reads are by InstanceKey
 -- Also has query index on DefintionId + LastUpdated
 CREATE TABLE [dbo].[SequenceHistory]
@@ -128,6 +136,10 @@ GO
 
 CREATE NONCLUSTERED INDEX IX_SequenceHistoryQuery ON
 [dbo].[SequenceHistory] ([DefinitionId] ASC, [LastUpdated] ASC);
+GO
+
+CREATE NONCLUSTERED INDEX IX_SequenceHistoryActive ON
+[dbo].[SequenceHistory] ([DefinitionId] ASC, [FinalRunStatus] ASC);
 GO
 
 -- Uniqueness and all reads are by SequenceId or SequenceId + Step

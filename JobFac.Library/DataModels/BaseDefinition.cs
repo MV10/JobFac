@@ -11,10 +11,9 @@
         public bool StartOnDemand { get; set; } = false;    // ignored when IsStartDisabled is true
         public bool StartBySchedule { get; set; } = false;  // ignored when IsStartDisabled is true
 
-        // TODO figure out overlapping startup rules
-        // query history table for instances in start/running states
-        // use an enum? allow, disallow, stopotherinstance, skipthisinstance
-        public bool AllowOverlappingStartup { get; set; } = false;
+        public AlreadyRunningAction AlreadyRunningAction { get; set; } = AlreadyRunningAction.StartNormally;
+        public NotificationTargetType AlreadyRunningNotificationTargetType { get; set; } = NotificationTargetType.None;
+        public string AlreadyRunningNotificationTarget { get; set; } = string.Empty;
 
         public ScheduleDateMode ScheduleDateMode { get; set; } = ScheduleDateMode.None;
         public ScheduleTimeMode ScheduleTimeMode { get; set; } = ScheduleTimeMode.None;

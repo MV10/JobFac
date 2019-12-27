@@ -16,6 +16,9 @@ namespace JobFac.Library.Database
         public static readonly string SelectJobHistoryBetween = "SELECT * FROM JobHistory WHERE DefinitionId = @DefinitionId AND LastUpdated BETWEEN @FirstDate AND @LastDate;";
         public static readonly string SelectSequenceHistoryBetween = "SELECT * FROM SequenceHistory WHERE DefinitionId = @DefinitionId AND LastUpdated BETWEEN @FirstDate AND @LastDate;";
 
+        public static readonly string SelectJobHistoryActive = "SELECT InstanceKey FROM JobHistory WHERE DefinitionId = @DefinitionId AND FinalRunStatus = 0;";
+        public static readonly string SelectSequenceHistoryActive = "SELECT InstanceKey FROM SequenceHistory WHERE DefinitionId = @DefinitionId AND FinalRunStatus = 0;";
+
         public static readonly string PurgeHistory = @"
         DELETE CapturedOutput FROM CapturedOutput c 
         INNER JOIN JobHistory h ON h.InstanceKey = c.InstanceKey AND h.DeleteAfter < @Now;

@@ -36,6 +36,12 @@ namespace JobFac.Library.Database
         public async Task<IReadOnlyList<SequenceHistory>> GetSequenceHistory(string definitionId, DateTimeOffset firstDate, DateTimeOffset lastDate)
             => await QueryAsync<SequenceHistory>(ConstQueries.SelectSequenceHistoryBetween, new { DefinitionId = definitionId, FirstDate = firstDate.UtcDateTime, LastDate = lastDate.UtcDateTime });
 
+        public async Task<IReadOnlyList<string>> GetActiveJobInstanceIds(string definitionId)
+            => await QueryAsync<string>(ConstQueries.SelectJobHistoryActive, new { DefinitionId = definitionId });
+
+        public async Task<IReadOnlyList<string>> GetActiveSequenceInstanceIds(string definitionId)
+            => await QueryAsync<string>(ConstQueries.SelectSequenceHistoryActive, new { DefinitionId = definitionId });
+
         public async Task InsertStatus(JobStatus status)
             => await ExecAsync(ConstQueries.InsertJobHistory, History(status));
 
@@ -75,7 +81,7 @@ namespace JobFac.Library.Database
                 DefinitionId = status.StartOptions.DefinitionId,
                 LastUpdated = status.LastUpdated,
                 DeleteAfter = status.LastUpdated.AddDays(historyRetentionDays).Date,
-                FinalRunStatus = status.RunStatus,
+                FinalRunStatus = status.HasExited ? status.RunStatus : RunStatus.Unknown,
                 ExitCode = status.ExitCode,
                 FullDetailsJson = JsonConvert.SerializeObject(status)
             };
@@ -87,7 +93,7 @@ namespace JobFac.Library.Database
                 DefinitionId = status.StartOptions.DefinitionId,
                 LastUpdated = status.LastUpdated,
                 DeleteAfter = status.LastUpdated.AddDays(historyRetentionDays).Date,
-                FinalRunStatus = status.RunStatus,
+                FinalRunStatus = status.HasExited ? status.RunStatus : RunStatus.Unknown,
                 FullDetailsJson = JsonConvert.SerializeObject(status)
             };
     }

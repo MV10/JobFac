@@ -13,6 +13,10 @@ namespace ConsoleTests
         {
             var host = Host.CreateDefaultBuilder(args);
 
+            // CTRL+C support, although that won't stop the Runner or job
+            // TODO does CTRL+C here cause the Runner to *never* unload?
+            host.UseConsoleLifetime(); 
+
             await host.AddJobFacClientAsync();
             host.ConfigureServices((ctx, svc) =>
             {
