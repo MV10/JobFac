@@ -18,23 +18,23 @@ namespace JobFac.Library.Database
         }
 
         private protected async Task<T> QueryOneAsync<T>(string sql, object param)
-            => (await QueryAsync<T>(sql, param)).FirstOrDefault();
+            => (await QueryAsync<T>(sql, param).ConfigureAwait(false)).FirstOrDefault();
 
         private protected async Task<IReadOnlyList<T>> QueryAsync<T>(string sql, object param)
         {
             using var conn = new SqlConnection(connectionString);
-            await conn.OpenAsync();
-            var result = await conn.QueryAsync<T>(sql, param);
-            await conn.CloseAsync();
+            await conn.OpenAsync().ConfigureAwait(false);
+            var result = await conn.QueryAsync<T>(sql, param).ConfigureAwait(false);
+            await conn.CloseAsync().ConfigureAwait(false);
             return result.ToList();
         }
 
         private protected async Task ExecAsync(string sql, object param)
         {
             using var conn = new SqlConnection(connectionString);
-            await conn.OpenAsync();
-            await conn.ExecuteAsync(sql, param);
-            await conn.CloseAsync();
+            await conn.OpenAsync().ConfigureAwait(false);
+            await conn.ExecuteAsync(sql, param).ConfigureAwait(false);
+            await conn.CloseAsync().ConfigureAwait(false);
         }
 
     }

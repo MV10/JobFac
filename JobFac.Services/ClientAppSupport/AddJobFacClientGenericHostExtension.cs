@@ -53,7 +53,7 @@ namespace JobFac.Services
                 catch
                 {
                     if (remainingAttempts == 0) throw;
-                    await Task.Delay(retryDelaySeconds * 1000);
+                    await Task.Delay(retryDelaySeconds * 1000).ConfigureAwait(false);
                 }
             }
             return client;
@@ -82,7 +82,7 @@ namespace JobFac.Services
                 client = builder.Build();
 
                 // causes host builder to run hosted services???
-                await client.Connect();
+                await client.Connect().ConfigureAwait(false);
             }
             catch
             {

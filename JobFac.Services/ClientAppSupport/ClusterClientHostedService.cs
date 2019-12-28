@@ -15,6 +15,6 @@ namespace JobFac.Services
             => Task.CompletedTask;
 
         public async Task StopAsync(CancellationToken cancellationToken)
-            => await orleansClusterClientWrapper.DisposeAsync();
+            => await orleansClusterClientWrapper.DisposeAsync().ConfigureAwait(false);
     }
 }

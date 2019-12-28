@@ -23,7 +23,7 @@ namespace JobFac.Services
 
         public async ValueTask DisposeAsync()
         {
-            await clusterClient.Close();
+            await clusterClient.Close().ConfigureAwait(false);
             clusterClient.Dispose();
         }
     }

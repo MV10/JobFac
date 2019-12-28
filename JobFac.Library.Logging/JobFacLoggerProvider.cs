@@ -34,7 +34,7 @@ namespace JobFac.Library.Logging
             foreach(var msg in messages)
             {
                 if (token.IsCancellationRequested) break;
-                await dataUtil.RemoteLogger(msg.Level, msg.Message);
+                await dataUtil.RemoteLogger(msg.Level, msg.Message).ConfigureAwait(false);
             }
         }
     }

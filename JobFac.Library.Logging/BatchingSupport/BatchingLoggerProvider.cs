@@ -85,7 +85,7 @@ namespace JobFac.Library.Logging
                 {
                     try
                     {
-                        await WriteMessagesAsync(_currentBatch, _cancellationTokenSource.Token);
+                        await WriteMessagesAsync(_currentBatch, _cancellationTokenSource.Token).ConfigureAwait(false);
                     }
                     catch
                     {
@@ -95,7 +95,7 @@ namespace JobFac.Library.Logging
                     _currentBatch.Clear();
                 }
 
-                await IntervalAsync(_interval, _cancellationTokenSource.Token);
+                await IntervalAsync(_interval, _cancellationTokenSource.Token).ConfigureAwait(false);
             }
         }
 

@@ -14,13 +14,13 @@ namespace JobFac.Library.Database
         { }
 
         public async Task<JobDefinition> GetJobDefinition(string id)
-            => await QueryOneAsync<JobDefinition>(ConstQueries.SelectJobDefinition, new { Id = id });
+            => await QueryOneAsync<JobDefinition>(ConstQueries.SelectJobDefinition, new { Id = id }).ConfigureAwait(false);
 
         public async Task<SequenceDefinition> GetSequenceDefinition(string id)
-            => await QueryOneAsync<SequenceDefinition>(ConstQueries.SelectSequenceDefinition, new { Id = id });
+            => await QueryOneAsync<SequenceDefinition>(ConstQueries.SelectSequenceDefinition, new { Id = id }).ConfigureAwait(false);
 
         public async Task<IReadOnlyList<StepDefinition>> GetStepsForSequence(string id)
-            => await QueryAsync<StepDefinition>(ConstQueries.SelectSequenceSteps, new { Id = id });
+            => await QueryAsync<StepDefinition>(ConstQueries.SelectSequenceSteps, new { Id = id }).ConfigureAwait(false);
 
     }
 }
