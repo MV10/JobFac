@@ -10,6 +10,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\JobFac.Library\JobFac.Library.csproj" />
     <ProjectReference Include="..\JobFac.Services\JobFac.Services.csproj" />
   </ItemGroup>
 

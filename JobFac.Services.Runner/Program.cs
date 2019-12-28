@@ -1,6 +1,7 @@
 ﻿using JobFac.Library.Logging;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Threading.Tasks;
 
@@ -20,8 +21,21 @@ namespace JobFac.Services.Runner
                 throw new Exception($"Job instance-key is invalid, format-D GUID expected");
 
             var host = Host.CreateDefaultBuilder(args);
-            host.ConfigureLogging(builder => builder.AddJobFacRemoteLogger());
+
+            host.ConfigureLogging(builder => 
+            {
+                // TODO move logging filters to appconfig.json
+                builder
+                .SetMinimumLevel(LogLevel.Warning)
+
+                // redirect logs to Orleans silo logger, overrides JobFac prefix with 
+                // Trace level so all JobFac messages will pass through to remote logger
+                .AddJobFacRemoteLogger(); 
+            });
+
+            // JobFacLoggerProvider requires IClusterClient in DI
             await host.AddJobFacClientAsync(addIClusterClient: true);
+
             host.ConfigureServices((ctx, svc) =>
             {
                 svc.AddLogging();

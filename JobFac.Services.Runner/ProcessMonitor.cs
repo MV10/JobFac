@@ -41,7 +41,7 @@ namespace JobFac.Services.Runner
 
         private async Task ExecuteAsync()
         {
-            logger.LogInformation($"Execution starting");
+            logger.LogTrace($"Execution starting");
             var jobService = jobFacServices.GetJob(Program.JobInstanceKey);
             if (jobService == null)
                 throw new Exception($"Unable to connect to job service (instance {Program.JobInstanceKey}");
@@ -58,14 +58,14 @@ namespace JobFac.Services.Runner
                 await jobService.UpdateExitMessage(RunStatus.Unknown, -1, $"JobFac.Services.Runner exception {ex}");
             }
 
-            logger.LogInformation($"Execution ending, calling StopApplication after log-flush delay");
+            logger.LogInformation($"Runner ending, calling StopApplication after log-flush delay");
             await Task.Delay(10000);
             appLifetime.StopApplication();
         }
 
         private async Task RunJob(IJob jobService, JobDefinition jobDef)
         {
-            logger.LogInformation($"RunJob starting");
+            logger.LogTrace($"RunJob starting");
             var tokenSource = new CancellationTokenSource();
             var token = tokenSource.Token;
 
@@ -93,9 +93,6 @@ namespace JobFac.Services.Runner
                     if(jobDef.CaptureStdOut == JobStreamHandling.Database)
                         proc.OutputDataReceived += (s, e) => { if (e?.Data != null) dbStdOut.AppendLine(e.Data); };
 
-                    // TODO if(jobDef.CaptureStdOut == JobStreamHandling.Logger)
-                    // logger.Log(...)
-
                     if(jobDef.CaptureStdOut.IsFileBased())
                     {
                         var pathname = jobDef.CaptureStdOut == JobStreamHandling.TimestampedFile
@@ -113,9 +110,6 @@ namespace JobFac.Services.Runner
                     if (jobDef.CaptureStdErr == JobStreamHandling.Database)
                         proc.ErrorDataReceived += (s, e) => { if (e?.Data != null) dbStdErr.AppendLine(e.Data); };
 
-                    // TODO if(jobDef.CaptureStdErr == JobStreamHandling.Logger)
-                    // logger.Log(...)
-
                     if (jobDef.CaptureStdErr.IsFileBased())
                     {
                         var pathname = jobDef.CaptureStdErr == JobStreamHandling.TimestampedFile
@@ -126,7 +120,7 @@ namespace JobFac.Services.Runner
                     }
                 }
 
-                logger.LogInformation($"RunJob calling Process.Start");
+                logger.LogTrace($"RunJob calling Process.Start");
                 try
                 {
                     // Although Start returns a boolean, it isn't useful to us. The documentation
@@ -150,13 +144,13 @@ namespace JobFac.Services.Runner
 
                 // TODO implement maximum run-time token cancellation
 
-                logger.LogInformation($"RunJob awaiting process exit or kill command");
+                logger.LogTrace($"RunJob awaiting process exit or kill command");
                 await Task.WhenAny
                     (
                         WaitForProcessExitAsync(proc, token),
                         MonitorKillCommandNamedPipe(token)
                     ).ConfigureAwait(false);
-                logger.LogInformation($"RunJob await exited, Process.HasExited? {proc.HasExited}");
+                logger.LogTrace($"RunJob await exited, Process.HasExited? {proc.HasExited}");
 
 
                 if (!proc.HasExited)
@@ -175,7 +169,7 @@ namespace JobFac.Services.Runner
                     // TODO play it safe and retrieve status and verify JobProc-aware job actually set an exit message?
                 }
 
-                logger.LogInformation($"RunJob cancelling token");
+                logger.LogTrace($"RunJob cancelling token");
                 tokenSource.Cancel();
 
                 // The Process WaitForExit call without a timeout value is the
@@ -189,7 +183,7 @@ namespace JobFac.Services.Runner
             }
             finally
             {
-                logger.LogInformation($"RunJob finalizing");
+                logger.LogTrace($"RunJob finalizing");
 
                 tokenSource?.Cancel();
                 proc?.Close();
@@ -207,12 +201,12 @@ namespace JobFac.Services.Runner
             if (jobDef.CaptureStdOut == JobStreamHandling.Database || jobDef.CaptureStdErr == JobStreamHandling.Database)
                 await jobService.WriteCapturedOutput(Program.JobInstanceKey, dbStdOut.ToString(), dbStdErr.ToString());
 
-            logger.LogInformation($"RunJob exiting");
+            logger.LogTrace($"RunJob exiting");
         }
 
         private async Task WaitForProcessExitAsync(Process proc, CancellationToken token = default)
         {
-            logger.LogInformation($"WaitForExit starting");
+            logger.LogTrace($"WaitForExit starting");
             var completion = new TaskCompletionSource<bool>();
             proc.EnableRaisingEvents = true;
             proc.Exited += CompleteTaskOnExit;
@@ -226,7 +220,7 @@ namespace JobFac.Services.Runner
             {
                 proc.Exited -= CompleteTaskOnExit;
             }
-            logger.LogInformation($"WaitForExit exiting");
+            logger.LogTrace($"WaitForExit exiting");
 
             void CompleteTaskOnExit(object s, EventArgs e)
                 => Task.Run(() => completion.TrySetResult(true));
@@ -235,7 +229,7 @@ namespace JobFac.Services.Runner
         // If this task exits, that means the Job service connected to this named pipe to request a process-kill
         private async Task MonitorKillCommandNamedPipe(CancellationToken token)
         {
-            logger.LogInformation($"KillCommand starting");
+            logger.LogTrace($"KillCommand starting");
             NamedPipeServerStream server = null;
             try
             {
@@ -247,7 +241,7 @@ namespace JobFac.Services.Runner
             {
                 server?.Dispose();
             }
-            logger.LogInformation($"KillCommand exiting");
+            logger.LogTrace($"KillCommand exiting");
         }
     }
 }

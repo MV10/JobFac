@@ -1,4 +1,5 @@
-﻿using JobFac.Services;
+﻿using JobFac.Library.Constants;
+using JobFac.Services;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Orleans;
@@ -9,7 +10,13 @@ using System.Threading.Tasks;
 
 namespace JobFac.Library.Logging
 {
-    [ProviderAlias("JobFacRemote")]
+    // The ProviderAlias is only visible where the provider is actually
+    // executing which, for JobFac, is typically the Runner process. This
+    // isn't available within the IDataUtilities grain where the message
+    // is re-output to the silo host logger. However, IDataUtilities will
+    // re-use the constant as the log message category to allow filtering.
+
+    [ProviderAlias(ConstLogging.JobFacLoggerProviderName)]
     public class JobFacLoggerProvider : BatchingLoggerProvider
     {
         private readonly IDataUtilities dataUtil;
@@ -27,7 +34,7 @@ namespace JobFac.Library.Logging
             foreach(var msg in messages)
             {
                 if (token.IsCancellationRequested) break;
-                await dataUtil.RemoteLogger(msg.Message);
+                await dataUtil.RemoteLogger(msg.Level, msg.Message);
             }
         }
     }

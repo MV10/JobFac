@@ -1,4 +1,5 @@
-﻿using JobFac.Library.Database;
+﻿using JobFac.Library.Constants;
+using JobFac.Library.Database;
 using JobFac.Library.DataModels;
 using JobFac.Services;
 using Microsoft.Extensions.Logging;
@@ -13,15 +14,14 @@ namespace JobFac.Services.Runtime
     [StatelessWorker]
     public class DataUtilities : Grain, IDataUtilities
     {
-        public class RemoteProcessLogs { }
-        private readonly ILogger<RemoteProcessLogs> logForRemote;
+        private readonly ILogger logForRemote;
         private readonly HistoryRepository historyRepo;
 
         public DataUtilities(
-            ILogger<RemoteProcessLogs> loggerForRemote,
+            ILoggerFactory loggerFactory,
             HistoryRepository historyRepository)
         {
-            logForRemote = loggerForRemote;
+            logForRemote = loggerFactory.CreateLogger(ConstLogging.JobFacLoggerProviderName);
             historyRepo = historyRepository;
         }
 

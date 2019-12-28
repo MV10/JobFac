@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using JobFac.Library.Constants;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Text;
 
@@ -16,28 +17,19 @@ namespace JobFac.Library.Logging
         }
 
         public IDisposable BeginScope<TState>(TState state)
-        {
-            // NOTE: Differs from source
-            return _provider.ScopeProvider?.Push(state);
-        }
+            => _provider.ScopeProvider?.Push(state);
 
-        public bool IsEnabled(LogLevel logLevel)
-        {
-            return _provider.IsEnabled;
-        }
+        public bool IsEnabled(LogLevel logLevel) 
+            => _provider.IsEnabled;
 
         public void Log<TState>(DateTimeOffset timestamp, LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter)
         {
-            if (!IsEnabled(logLevel))
-            {
-                return;
-            }
+            if (!IsEnabled(logLevel)) return;
 
             var builder = new StringBuilder();
-            builder.Append(timestamp.ToString("yyyy-MM-dd HH:mm:ss.fff zzz"));
-            builder.Append(" [");
-            builder.Append(logLevel.ToString());
-            builder.Append("] ");
+            //builder.Append("[");
+            //builder.Append(timestamp.ToString(ConstLogging.LogEntryTimestampFormat));
+            //builder.Append("] ");
             builder.Append(_category);
 
             var scopeProvider = _provider.ScopeProvider;
@@ -58,11 +50,9 @@ namespace JobFac.Library.Logging
             builder.AppendLine(formatter(state, exception));
 
             if (exception != null)
-            {
                 builder.AppendLine(exception.ToString());
-            }
 
-            _provider.AddMessage(timestamp, builder.ToString());
+            _provider.AddMessage(logLevel, timestamp, builder.ToString());
         }
 
         public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter)

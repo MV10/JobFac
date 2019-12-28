@@ -1,16 +1,17 @@
-﻿using System;
+﻿using JobFac.Library.Constants;
+using System;
 
 namespace JobFac.Library.Logging
 {
     public class BatchingLoggerOptions
     {
         private int? _batchSize;
-        private int? _backgroundQueueSize = 1000;
-        private TimeSpan _flushPeriod = TimeSpan.FromSeconds(5);
+        private int? _backgroundQueueSize = ConstLogging.DefaultBackgroundQueueSize;
+        private TimeSpan _flushPeriod = TimeSpan.FromSeconds(ConstLogging.DefaultFlushQueueSeconds);
 
         /// <summary>
         /// Gets or sets the period after which logs will be flushed to the store. 
-        /// Defaults to <c>5 seconds</c>.
+        /// Defaults to <c>5</c> seconds.
         /// </summary>
         public TimeSpan FlushPeriod
         {
@@ -18,9 +19,8 @@ namespace JobFac.Library.Logging
             set
             {
                 if (value <= TimeSpan.Zero)
-                {
                     throw new ArgumentOutOfRangeException(nameof(value), $"{nameof(FlushPeriod)} must be positive.");
-                }
+
                 _flushPeriod = value;
             }
         }
@@ -36,26 +36,24 @@ namespace JobFac.Library.Logging
             set
             {
                 if (value < 0)
-                {
                     throw new ArgumentOutOfRangeException(nameof(value), $"{nameof(BackgroundQueueSize)} must be non-negative.");
-                }
+
                 _backgroundQueueSize = value;
             }
         }
 
         /// <summary>
         /// Gets or sets a maximum number of events to include in a single batch or null for no limit.
-        /// </summary>
         /// Defaults to <c>null</c>.
+        /// </summary>
         public int? BatchSize
         {
             get { return _batchSize; }
             set
             {
                 if (value <= 0)
-                {
                     throw new ArgumentOutOfRangeException(nameof(value), $"{nameof(BatchSize)} must be positive.");
-                }
+
                 _batchSize = value;
             }
         }

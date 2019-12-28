@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using JobFac.Library.Constants;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Orleans;
@@ -20,10 +21,17 @@ namespace DevConsoleHost
 
                 host.ConfigureLogging(builder =>
                 {
+                    // TODO move logging filters to appconfig.json
                     builder
-                    .AddFilter("Microsoft", LogLevel.Warning)   // generic host lifecycle messages
-                    .AddFilter("Orleans", LogLevel.Warning)     // suppress status dumps
-                    .AddFilter("Runtime", LogLevel.Warning)     // also an Orleans prefix
+
+                    .SetMinimumLevel(LogLevel.Warning)
+                    //.AddFilter("Microsoft", LogLevel.Warning)   // generic host lifecycle messages
+                    //.AddFilter("Orleans", LogLevel.Warning)     // suppress status dumps
+                    //.AddFilter("Runtime", LogLevel.Warning)     // also an Orleans prefix
+
+                    // JobFac Runner currently uses info, error, and trace
+                    .AddFilter(ConstLogging.JobFacLoggerProviderName, LogLevel.Trace)    // forwarded from Runner
+
                     .AddDebug()                                 // VS Debug window
                     .AddConsole();
                 });

@@ -30,14 +30,12 @@ namespace JobFac.Library.Logging
             // NOTE: Only IsEnabled and IncludeScopes are monitored
 
             var loggerOptions = options.CurrentValue;
+
             if (loggerOptions.BatchSize <= 0)
-            {
                 throw new ArgumentOutOfRangeException(nameof(loggerOptions.BatchSize), $"{nameof(loggerOptions.BatchSize)} must be a positive number.");
-            }
+
             if (loggerOptions.FlushPeriod <= TimeSpan.Zero)
-            {
                 throw new ArgumentOutOfRangeException(nameof(loggerOptions.FlushPeriod), $"{nameof(loggerOptions.FlushPeriod)} must be longer than zero.");
-            }
 
             _interval = loggerOptions.FlushPeriod;
             _batchSize = loggerOptions.BatchSize;
@@ -106,13 +104,13 @@ namespace JobFac.Library.Logging
             return Task.Delay(interval, cancellationToken);
         }
 
-        internal void AddMessage(DateTimeOffset timestamp, string message)
+        internal void AddMessage(LogLevel logLevel, DateTimeOffset timestamp, string message)
         {
             if (!_messageQueue.IsAddingCompleted)
             {
                 try
                 {
-                    _messageQueue.Add(new LogMessage { Message = message, Timestamp = timestamp }, _cancellationTokenSource.Token);
+                    _messageQueue.Add(new LogMessage { Level = logLevel, Message = message, Timestamp = timestamp }, _cancellationTokenSource.Token);
                 }
                 catch
                 {
@@ -141,20 +139,15 @@ namespace JobFac.Library.Logging
                 _outputTask.Wait(_interval);
             }
             catch (TaskCanceledException)
-            {
-            }
+            { }
             catch (AggregateException ex) when (ex.InnerExceptions.Count == 1 && ex.InnerExceptions[0] is TaskCanceledException)
-            {
-            }
+            { }
         }
 
         public void Dispose()
         {
             _optionsChangeToken?.Dispose();
-            if (IsEnabled)
-            {
-                Stop();
-            }
+            if (IsEnabled) Stop();
         }
 
         public ILogger CreateLogger(string categoryName)
