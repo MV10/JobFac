@@ -7,8 +7,7 @@ namespace job.JobFac.unaware
     {
         static async Task Main(string[] args)
         {
-            int seconds = 0;
-            if (args.Length != 1 || !int.TryParse(args[0], out seconds) || seconds < 1)
+            if (args.Length != 1 || !int.TryParse(args[0], out var seconds) || seconds < 1)
             {
                 Environment.ExitCode = -1;
                 Console.Error.WriteLine("JobFac-unaware sample requires a single argument defining number of seconds to sleep.");

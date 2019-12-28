@@ -74,6 +74,15 @@ namespace JobFac.Services.Runtime
             return Task.FromResult(status);
         }
 
+        public Task<string> GetStartupPayload()
+        {
+            if (status == null)
+                throw new Exception($"Job has not been started (instance {jobInstanceKey})");
+
+            status.StartOptions.StartupPayloads.TryGetValue(jobDefinition.Id, out var payload);
+            return Task.FromResult(payload);
+        }
+
         public async Task UpdateExitMessage(RunStatus runStatus, int exitCode, string exitMessage)
         {
             if (status == null)

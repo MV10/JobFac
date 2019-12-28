@@ -1,4 +1,5 @@
-﻿using JobFac.Library.Logging;
+﻿using JobFac.Library;
+using JobFac.Library.Logging;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -14,11 +15,11 @@ namespace JobFac.Services.Runner
         public static async Task Main(string[] args)
         {
             if (args.Length != 1)
-                throw new Exception("Runner requires one argument reflecting the job instance-key");
+                throw new Exception("Runner requires one GUID argument reflecting the job instance-key");
 
-            JobInstanceKey = args[0];
-            if (!Guid.TryParse(JobInstanceKey, out var _))
-                throw new Exception($"Job instance-key is invalid, format-D GUID expected");
+            JobInstanceKey = Formatting.FormattedInstanceKey(args[0]);
+            if (!JobInstanceKey.HasContent())
+                throw new Exception("Runner requires one GUID argument reflecting the job instance-key");
 
             var host = Host.CreateDefaultBuilder(args);
 

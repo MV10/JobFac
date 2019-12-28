@@ -28,6 +28,11 @@ The goal is to keep this fully open sourced and free to use, along the same line
 
 ## Features Implemented
 
+2019-dec-28
+* implemented JobFac-aware sample and test code with startup payload retrieval
+* added CoordinatedBackgroundService (cleaner startup than .NET's BackgroundService)
+* migrated all hosted services to CoordinatedBackgroundService
+
 2019-dec-27
 * job "already running" options implemented
 * remote-access to JobFac server's ILogger (Runner is a separate process)

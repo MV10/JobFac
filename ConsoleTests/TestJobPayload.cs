@@ -6,11 +6,11 @@ using System.Threading.Tasks;
 
 namespace ConsoleTests
 {
-    public class TestJobMonitoring : CoordinatedBackgroundService
+    public class TestJobPayload : CoordinatedBackgroundService
     {
         private readonly IJobFacServiceProvider jobFacServices;
 
-        public TestJobMonitoring(
+        public TestJobPayload(
             IHostApplicationLifetime appLifetime,
             IJobFacServiceProvider jobFacServices)
             : base(appLifetime)
@@ -20,7 +20,7 @@ namespace ConsoleTests
 
         protected override async Task ExecuteAsync()
         {
-            // Exactly the same as TestJobPayload except the job isn't JobFac-aware
+            // Exactly the same as TestJobMonitoring except the job is JobFac-aware and needs a payload
 
             try
             {
@@ -29,11 +29,18 @@ namespace ConsoleTests
 
                 var options = new FactoryStartOptions
                 {
-                    DefinitionId = "Sample.JobFac.unaware"
+                    DefinitionId = "Sample.JobFac.aware"
+                    // we could add the payload here but it's easier to use the StartJob overload
+                    // since FactoryStartOptions stores alternate argument lists and startup
+                    // payloads in a dictionary (which is useful for multi-job sequences)
                 };
 
-                Console.WriteLine("Starting sample job: Sample.JobFac.unaware");
-                var jobKey = await factory.StartJob(options);
+                string payload = "35,Hello world!";
+
+                Console.WriteLine($"Starting sample job Sample.JobFac.aware with payload: {payload}");
+                var jobKey = await factory.StartJob(options, startupPayload: payload);
+
+                // Everything below is identical to TestJobMonitoring
                 Console.WriteLine($"Job instance key: {jobKey}");
 
                 var timeout = DateTimeOffset.UtcNow.AddSeconds(90);
@@ -57,7 +64,7 @@ namespace ConsoleTests
                     done = status.HasExited;
                 }
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 Console.WriteLine($"\n\nException:\n{ex}");
             }

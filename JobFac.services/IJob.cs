@@ -9,6 +9,7 @@ namespace JobFac.Services
         Task Start(JobDefinition jobDefinition, FactoryStartOptions options);
         Task<JobDefinition> GetDefinition();
         Task<JobStatus> GetStatus();
+        Task<string> GetStartupPayload();
         Task UpdateRunStatus(RunStatus runStatus);
         Task UpdateExitMessage(RunStatus runStatus, int exitCode, string exitMessage);
         Task Stop();

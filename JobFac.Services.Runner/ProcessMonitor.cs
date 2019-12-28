@@ -12,36 +12,24 @@ using System.Threading.Tasks;
 
 namespace JobFac.Services.Runner
 {
-    public class ProcessMonitor : IHostedService
+    public class ProcessMonitor : CoordinatedBackgroundService
     {
         private readonly ILogger<ProcessMonitor> logger;
-        private readonly IHostApplicationLifetime appLifetime;
         private readonly IJobFacServiceProvider jobFacServices;
 
         public ProcessMonitor(
-            ILogger<ProcessMonitor> logger,
             IHostApplicationLifetime appLifetime,
+            ILogger<ProcessMonitor> logger,
             IJobFacServiceProvider jobFacServices)
+            : base(appLifetime)
         {
             this.logger = logger;
-            this.appLifetime = appLifetime;
             this.jobFacServices = jobFacServices;
         }
 
-        public Task StartAsync(CancellationToken cancellationToken)
+        protected override async Task ExecuteAsync()
         {
-            logger.LogInformation($"Runner starting, job instance {Program.JobInstanceKey}");
-            // since this is an event handler, the lambda's async void is acceptable
-            appLifetime.ApplicationStarted.Register(async () => await ExecuteAsync());
-            return Task.CompletedTask;
-        }
-
-        public Task StopAsync(CancellationToken cancellationToken)
-            => Task.CompletedTask;
-
-        private async Task ExecuteAsync()
-        {
-            logger.LogTrace($"Execution starting");
+            logger.LogTrace($"Runner starting, job instance {Program.JobInstanceKey}");
             var jobService = jobFacServices.GetJob(Program.JobInstanceKey);
             if (jobService == null)
                 throw new Exception($"Unable to connect to job service (instance {Program.JobInstanceKey}");

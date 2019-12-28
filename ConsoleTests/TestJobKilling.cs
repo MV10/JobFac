@@ -2,35 +2,23 @@
 using JobFac.Services;
 using Microsoft.Extensions.Hosting;
 using System;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace ConsoleTests
 {
-    public class TestJobKilling : IHostedService
+    public class TestJobKilling : CoordinatedBackgroundService
     {
-        private readonly IHostApplicationLifetime appLifetime;
         private readonly IJobFacServiceProvider jobFacServices;
 
         public TestJobKilling(
             IHostApplicationLifetime appLifetime,
             IJobFacServiceProvider jobFacServices)
+            : base(appLifetime)
         {
-            this.appLifetime = appLifetime;
             this.jobFacServices = jobFacServices;
         }
 
-        public Task StartAsync(CancellationToken cancellationToken)
-        {
-            // since this is an event handler, the lambda's async void is acceptable
-            appLifetime.ApplicationStarted.Register(async () => await ExecuteAsync());
-            return Task.CompletedTask;
-        }
-
-        public Task StopAsync(CancellationToken cancellationToken)
-            => Task.CompletedTask;
-
-        public async Task ExecuteAsync()
+        protected override async Task ExecuteAsync()
         {
             try
             {
