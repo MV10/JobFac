@@ -20,16 +20,26 @@ namespace ConsoleTests
 
         protected override async Task ExecuteAsync()
         {
-            Console.WriteLine("Querying repository.");
-            var jobDef = await definitionRepo.GetJobDefinition("Sample.JobFac.unaware");
+            try
+            {
+                Console.WriteLine("Querying repository.");
+                var jobDef = await definitionRepo.GetJobDefinition("Sample.JobFac.unaware");
 
-            Console.WriteLine($"Response is null? {jobDef is null}");
-            if (jobDef is null) return;
+                Console.WriteLine($"Response is null? {jobDef is null}");
+                if (jobDef is null) return;
 
-            Console.WriteLine($"ExecutablePathname:\n{jobDef.ExecutablePathname}");
+                Console.WriteLine($"ExecutablePathname:\n{jobDef.ExecutablePathname}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Exception {ex}");
+            }
+            finally
+            {
+                Console.WriteLine("Calling StopApplication");
+                appLifetime.StopApplication();
+            }
 
-            Console.WriteLine("Calling StopApplication");
-            appLifetime.StopApplication();
         }
     }
 }

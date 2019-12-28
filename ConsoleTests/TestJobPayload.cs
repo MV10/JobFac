@@ -68,8 +68,10 @@ namespace ConsoleTests
             {
                 Console.WriteLine($"\n\nException:\n{ex}");
             }
-
-            appLifetime.StopApplication();
+            finally
+            {
+                appLifetime.StopApplication();
+            }
         }
     }
 }

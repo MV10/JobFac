@@ -29,13 +29,18 @@ namespace JobFac.Services.Runner
 
         protected override async Task ExecuteAsync()
         {
-            logger.LogTrace($"Runner starting, job instance {Program.JobInstanceKey}");
-            var jobService = jobFacServices.GetJob(Program.JobInstanceKey);
-            if (jobService == null)
-                throw new Exception($"Unable to connect to job service (instance {Program.JobInstanceKey}");
+            IJob jobService = null;
 
             try
             {
+                logger.LogTrace($"Runner starting, job instance {Program.JobInstanceKey}");
+                jobService = jobFacServices.GetJob(Program.JobInstanceKey);
+                if (jobService == null)
+                {
+                    logger.LogError("Runner was unable to obtain a reference to the Job service");
+                    return;
+                }
+
                 await jobService.UpdateRunStatus(RunStatus.StartRequested);
                 var jobDef = await jobService.GetDefinition();
                 await RunJob(jobService, jobDef);
@@ -45,10 +50,12 @@ namespace JobFac.Services.Runner
                 logger.LogError($"ExecuteAsync {ex}");
                 await jobService.UpdateExitMessage(RunStatus.Unknown, -1, $"JobFac.Services.Runner exception {ex}");
             }
-
-            logger.LogInformation($"Runner ending, calling StopApplication after log-flush delay");
-            await Task.Delay(10000);
-            appLifetime.StopApplication();
+            finally
+            {
+                logger.LogInformation($"Runner ending, calling StopApplication after log-flush delay");
+                await Task.Delay(10000);
+                appLifetime.StopApplication();
+            }
         }
 
         private async Task RunJob(IJob jobService, JobDefinition jobDef)

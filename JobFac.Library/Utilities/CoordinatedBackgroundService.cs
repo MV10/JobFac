@@ -8,6 +8,16 @@ using System.Threading.Tasks;
 // use of Register). This way all hosted services can initialize via StartAsync
 // before any of them begin doing work (assuming they all use this base class).
 
+// Notice the ApplicationStarted.Register code in StartAsync. The lambda returns
+// async void, which is generally only allowable for callbacks (aka event handlers).
+// That's what Register is, so this is valid.  ExecuteAsync is not awaited, this is
+// a fire-and-forget scenario. In other words, the caller, which is the token 
+// Register method, doesn't care about the outcome of the Task from ExecuteAsync.
+
+// It is therefore CRITICAL that ExecuteAsync handles *all* exceptions internally.
+// There is no way for ExecuteAsync to hand off exceptions for handling higher up
+// the chain, and an unhandled exception will terminate the process.
+
 namespace Microsoft.Extensions.Hosting
 {
     public abstract class CoordinatedBackgroundService : IHostedService, IDisposable
@@ -21,7 +31,6 @@ namespace Microsoft.Extensions.Hosting
 
         public Task StartAsync(CancellationToken cancellationToken)
         {
-            // since this is an event handler, the lambda's async void is acceptable
             appLifetime.ApplicationStarted.Register(async () => await ExecuteAsync());
             return Task.CompletedTask;
         }
