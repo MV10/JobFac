@@ -2,8 +2,8 @@
 {
     public enum StepExitDecision
     {
-        DoActionWhenAllExit,
-        DoActionWhenAnyExit,
-        DoNextStepWithoutWaiting
+        DoActionWhenAllExit = 0,
+        DoActionWhenAnyExit = 1,
+        DoNextStepWithoutWaiting = 2
     }
 }

@@ -2,8 +2,8 @@
 {
     public enum ScheduleTimeMode
     {
-        None,
-        Minutes,
-        HoursMinutes
+        None = 0,
+        Minutes = 1,
+        HoursMinutes = 2
     }
 }

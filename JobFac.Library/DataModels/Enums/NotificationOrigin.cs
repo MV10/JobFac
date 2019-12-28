@@ -2,8 +2,8 @@
 {
     public enum NotificationOrigin
     {
-        Job,
-        Sequence,
-        SequenceAndJobs
+        Job = 0,
+        Sequence = 1,
+        SequenceAndJobs = 2
     }
 }

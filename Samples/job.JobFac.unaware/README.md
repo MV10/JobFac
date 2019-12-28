@@ -6,7 +6,7 @@ Demonstrates a job which has no JobFac dependencies. It will be executed and mon
 A run for 15 seconds produces this output:
 
 ```
-Sample sleeping for 45 secs in 5 second increments.
+Sample sleeping for 15 secs in 5 second increments.
 
 Sleep interval #1
 .....

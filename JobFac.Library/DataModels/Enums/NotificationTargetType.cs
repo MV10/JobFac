@@ -2,9 +2,9 @@
 {
     public enum NotificationTargetType
     {
-        None,
-        UriTrigger,     // no data passed
-        UriPostStatus,  // posts data
-        Email,          // internally generated message
+        None = 0,
+        UriTrigger = 1,     // no data passed
+        UriPostStatus = 2,  // posts data
+        Email = 3,          // internally generated message
     }
 }
