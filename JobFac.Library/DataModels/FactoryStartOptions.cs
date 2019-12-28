@@ -15,6 +15,6 @@ namespace JobFac.Library.DataModels
 
         // key is job definition Id
         public Dictionary<string, string> ReplacementArguments { get; set; } = new Dictionary<string, string>();    // replaces args in a job definition
-        public Dictionary<string, string> StartupPayloads { get; set; } = new Dictionary<string, string>();         // for JobFac-aware apps (PrefixJobInstanceIdArgument)
+        public Dictionary<string, string> StartupPayloads { get; set; } = new Dictionary<string, string>();         // for JobFac-aware apps
     }
 }

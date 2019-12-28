@@ -6,6 +6,7 @@ using Orleans;
 using Orleans.Configuration;
 using Orleans.Hosting;
 using System;
+using System.Diagnostics;
 using System.Net;
 using System.Threading.Tasks;
 
@@ -30,9 +31,9 @@ namespace DevConsoleHost
                     //.AddFilter("Runtime", LogLevel.Warning)     // also an Orleans prefix
 
                     // JobFac Runner currently uses info, error, and trace
-                    .AddFilter(ConstLogging.JobFacLoggerProviderName, LogLevel.Trace)    // forwarded from Runner
+                    //.AddFilter(ConstLogging.JobFacLoggerProviderName, LogLevel.Trace)
 
-                    .AddDebug()                                 // VS Debug window
+                    .AddDebug() // VS Debug window
                     .AddConsole();
                 });
 
@@ -61,6 +62,12 @@ namespace DevConsoleHost
             catch (Exception ex)
             {
                 Console.WriteLine(ex);
+            }
+
+            if (!Debugger.IsAttached)
+            {
+                Console.WriteLine("\n\nPress any key to exit.");
+                Console.ReadKey(true);
             }
         }
     }

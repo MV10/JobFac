@@ -37,7 +37,7 @@ namespace JobFac.Services.Runtime
                 throw new Exception($"Job definition {id} does not allow replacement arguments");
 
             if (options.StartupPayloads.ContainsKey(id) && !jobDefinition.IsJobFacAware)
-                throw new Exception($"Job definition {id} not JobFac-aware and doesnt support startup payloads");
+                throw new Exception($"Job definition {id} is not JobFac-aware and doesn't support startup payloads");
 
             if (jobDefinition.AlreadyRunningAction != AlreadyRunningAction.StartNormally)
             {
@@ -65,6 +65,23 @@ namespace JobFac.Services.Runtime
             await jobGrain.Start(jobDefinition, options);
 
             return jobInstanceKey;
+        }
+
+        public async Task<string> StartJob(FactoryStartOptions options, string replacementArguments = null, string startupPayload = null)
+        {
+            if(replacementArguments != null)
+            {
+                options.ReplacementArguments.Clear();
+                options.ReplacementArguments.Add(options.DefinitionId, replacementArguments);
+            }
+
+            if(startupPayload != null)
+            {
+                options.StartupPayloads.Clear();
+                options.StartupPayloads.Add(options.DefinitionId, startupPayload);
+            }
+
+            return await StartJob(options);
         }
 
         public async Task<string> StartSequence(FactoryStartOptions options)

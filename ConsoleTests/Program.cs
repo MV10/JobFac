@@ -12,25 +12,32 @@ namespace ConsoleTests
     {
         public static async Task Main(string[] args)
         {
-            var host = Host.CreateDefaultBuilder(args);
-
-            host.ConfigureLogging(builder => builder.SetMinimumLevel(LogLevel.Warning) );
-
-            // CTRL+C support, although that won't stop the Runner or job
-            // TODO does CTRL+C here cause the Runner to *never* unload?
-            host.UseConsoleLifetime(); 
-
-            await host.AddJobFacClientAsync();
-            host.ConfigureServices((ctx, svc) =>
+            try
             {
-                svc.AddDatabaseServices();
+                var host = Host.CreateDefaultBuilder(args);
 
-                //svc.AddHostedService<TestDatabaseRepository>();
-                svc.AddHostedService<TestJobMonitoring>();
-                //svc.AddHostedService<TestJobKilling>();
-            });
+                host.ConfigureLogging(builder => builder.SetMinimumLevel(LogLevel.Warning));
 
-            await host.RunConsoleAsync();
+                // CTRL+C support, although that won't stop the Runner or job
+                // TODO does CTRL+C here cause the Runner to *never* unload?
+                host.UseConsoleLifetime();
+
+                await host.AddJobFacClientAsync();
+                host.ConfigureServices((ctx, svc) =>
+                {
+                    svc.AddDatabaseServices();
+
+                    //svc.AddHostedService<TestDatabaseRepository>();
+                    svc.AddHostedService<TestJobMonitoring>();
+                    //svc.AddHostedService<TestJobKilling>();
+                });
+
+                await host.RunConsoleAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+            }
 
             if(!Debugger.IsAttached)
             {
