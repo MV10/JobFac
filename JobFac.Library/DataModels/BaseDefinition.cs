@@ -15,8 +15,8 @@
         public NotificationTargetType AlreadyRunningNotificationTargetType { get; set; } = NotificationTargetType.None;
         public string AlreadyRunningNotificationTarget { get; set; } = string.Empty;
 
-        public ScheduleDateMode ScheduleDateMode { get; set; } = ScheduleDateMode.None;
-        public ScheduleTimeMode ScheduleTimeMode { get; set; } = ScheduleTimeMode.None;
+        public ScheduleDateMode ScheduleDateMode { get; set; } = ScheduleDateMode.Unscheduled;
+        public ScheduleTimeMode ScheduleTimeMode { get; set; } = ScheduleTimeMode.HoursMinutes;
         public string ScheduleDates { get; set; } = string.Empty;
         public string ScheduleTimes { get; set; } = string.Empty;
 

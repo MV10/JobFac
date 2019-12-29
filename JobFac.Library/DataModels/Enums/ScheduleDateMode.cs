@@ -2,7 +2,7 @@
 {
     public enum ScheduleDateMode
     {
-        None = 0,
+        Unscheduled = 0,
         DaysOfWeek = 1,         // 0-6 with commas
         FirstLastWeekday = 2,   // first/last
         DaysOfMonth = 3,        // numeric with commas, or first/last

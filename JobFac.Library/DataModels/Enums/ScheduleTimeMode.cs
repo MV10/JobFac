@@ -2,8 +2,8 @@
 {
     public enum ScheduleTimeMode
     {
-        None = 0,
-        Minutes = 1,
-        HoursMinutes = 2
+        Unscheduled = 0,    // only with ScheduleDateMode.Unscheduled
+        Minutes = 1,        // every hour
+        HoursMinutes = 2    // specific times: 1130,1400,2245
     }
 }
