@@ -45,13 +45,13 @@ namespace ConsoleTests
 
                 var timeout = DateTimeOffset.UtcNow.AddSeconds(90);
                 bool done = false;
-                IJob job = null;
+                IJobExternalProcess job = null;
                 while (!done && DateTimeOffset.UtcNow < timeout)
                 {
                     Console.WriteLine("Pausing 10 seconds then reading status.");
                     await Task.Delay(10000);
 
-                    if (job == null) job = jobFacServices.GetJob(jobKey);
+                    if (job == null) job = jobFacServices.GetExternalProcessJob(jobKey);
                     if (job == null)
                     {
                         Console.WriteLine("Failed to obtain job proxy.");

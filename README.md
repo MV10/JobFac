@@ -26,7 +26,10 @@ The goal is to keep this fully open sourced and free to use, along the same line
 * Dapper 2.0
 * SQL Server 2016+
 
-## Features Implemented
+## Progress Notes
+
+2019-dec-29
+* heavy refactoring to define a sequence as kind of job, simplify database
 
 2019-dec-28
 * implemented JobFac-aware sample and test code with startup payload retrieval

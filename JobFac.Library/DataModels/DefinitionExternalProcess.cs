@@ -1,6 +1,6 @@
 ﻿namespace JobFac.Library.DataModels
 {
-    public class JobDefinition : BaseDefinition
+    public class DefinitionExternalProcess
     {
         public string ExecutablePathname { get; set; } = string.Empty;
         public string WorkingDirectory { get; set; } = string.Empty;

@@ -4,7 +4,6 @@ namespace JobFac.Library.DataModels
 {
     public class FactoryStartOptions
     {
-        // job or sequence, based on the JobFactory Start method used
         public string DefinitionId { get; set; } = string.Empty;
 
         // this is in addition to notifications in the underlying definition

@@ -1,6 +1,7 @@
-﻿using JobFac.Library.Constants;
-using Dapper;
+﻿using Dapper;
+using JobFac.Library.Constants;
 using Microsoft.Extensions.Configuration;
+using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Linq;
@@ -17,9 +18,6 @@ namespace JobFac.Library.Database
             connectionString = config.GetConnectionString(ConstConfigKeys.StorageConnectionStringName);
         }
 
-        private protected async Task<T> QueryOneAsync<T>(string sql, object param)
-            => (await QueryAsync<T>(sql, param).ConfigureAwait(false)).FirstOrDefault();
-
         private protected async Task<IReadOnlyList<T>> QueryAsync<T>(string sql, object param)
         {
             using var conn = new SqlConnection(connectionString);
@@ -27,6 +25,25 @@ namespace JobFac.Library.Database
             var result = await conn.QueryAsync<T>(sql, param).ConfigureAwait(false);
             await conn.CloseAsync().ConfigureAwait(false);
             return result.ToList();
+        }
+
+        // https://github.com/StackExchange/Dapper#multi-mapping
+        private protected async Task<IReadOnlyList<TOut>> QueryMultiMapAsync<TOuter, TInner, TOut>(string sql, Func<TOuter, TInner, TOut> map, object param)
+        {
+            using var conn = new SqlConnection(connectionString);
+            await conn.OpenAsync().ConfigureAwait(false);
+            var result = await conn.QueryAsync(sql, map, param).ConfigureAwait(false);
+            await conn.CloseAsync().ConfigureAwait(false);
+            return result.ToList();
+        }
+
+        private protected async Task<T> QueryScalarAsync<T>(string sql, object param)
+        {
+            using var conn = new SqlConnection(connectionString);
+            await conn.OpenAsync().ConfigureAwait(false);
+            var result = await conn.ExecuteScalarAsync<T>(sql, param).ConfigureAwait(false);
+            await conn.CloseAsync().ConfigureAwait(false);
+            return result;
         }
 
         private protected async Task ExecAsync(string sql, object param)
@@ -37,5 +54,10 @@ namespace JobFac.Library.Database
             await conn.CloseAsync().ConfigureAwait(false);
         }
 
+        private protected async Task<T> QueryOneRowAsync<T>(string sql, object param)
+            => (await QueryAsync<T>(sql, param).ConfigureAwait(false)).FirstOrDefault();
+
+        private protected async Task<TOut> QueryMultiMapOneRowAsync<TOuter, TInner, TOut>(string sql, Func<TOuter, TInner, TOut> map, object param)
+            => (await QueryMultiMapAsync(sql, map, param).ConfigureAwait(false)).FirstOrDefault();
     }
 }

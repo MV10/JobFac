@@ -9,8 +9,8 @@ namespace Orleans.Hosting
             builder.ConfigureApplicationParts(parts =>
             {
                 parts.AddApplicationPart(typeof(JobFactory).Assembly).WithReferences();
-                parts.AddApplicationPart(typeof(Job).Assembly).WithReferences();
-                parts.AddApplicationPart(typeof(Sequence).Assembly).WithReferences();
+                parts.AddApplicationPart(typeof(JobExternalProcess).Assembly).WithReferences();
+                //parts.AddApplicationPart(typeof(JobSequence).Assembly).WithReferences();
                 parts.AddApplicationPart(typeof(DataUtilities).Assembly).WithReferences();
                 //parts.AddApplicationPart(typeof(SchedulerSingleton).Assembly).WithReferences();
             });

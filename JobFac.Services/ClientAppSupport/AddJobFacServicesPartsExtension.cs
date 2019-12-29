@@ -12,8 +12,8 @@ namespace Orleans
             builder.ConfigureApplicationParts(parts =>
             {
                 parts.AddApplicationPart(typeof(IJobFactory).Assembly).WithReferences();
-                parts.AddApplicationPart(typeof(IJob).Assembly).WithReferences();
-                parts.AddApplicationPart(typeof(ISequence).Assembly).WithReferences();
+                parts.AddApplicationPart(typeof(IJobExternalProcess).Assembly).WithReferences();
+                //parts.AddApplicationPart(typeof(IJobSequence).Assembly).WithReferences();
                 parts.AddApplicationPart(typeof(IDataUtilities).Assembly).WithReferences();
             });
             return builder;

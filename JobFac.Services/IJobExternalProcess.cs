@@ -1,14 +1,15 @@
 ﻿using JobFac.Library.DataModels;
+using JobFac.Library.DataModels.Abstractions;
 using Orleans;
 using System.Threading.Tasks;
 
 namespace JobFac.Services
 {
-    public interface IJob : IGrainWithStringKey
+    public interface IJobExternalProcess : IGrainWithStringKey
     {
-        Task Start(JobDefinition jobDefinition, FactoryStartOptions options);
-        Task<JobDefinition> GetDefinition();
-        Task<JobStatus> GetStatus();
+        Task Start(JobDefinition<DefinitionExternalProcess> jobDefinition, FactoryStartOptions options);
+        Task<JobDefinition<DefinitionExternalProcess>> GetDefinition();
+        Task<JobStatus<StatusExternalProcess>> GetStatus();
         Task<string> GetStartupPayload();
         Task UpdateRunStatus(RunStatus runStatus);
         Task UpdateExitMessage(RunStatus runStatus, int exitCode, string exitMessage);

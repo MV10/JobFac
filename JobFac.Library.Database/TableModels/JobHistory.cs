@@ -10,7 +10,6 @@ namespace JobFac.Library.Database
         public DateTimeOffset LastUpdated { get; set; } = DateTimeOffset.MinValue;
         public DateTimeOffset DeleteAfter { get; set; } = DateTimeOffset.MaxValue;
         public RunStatus FinalRunStatus { get; set; } = RunStatus.Unknown;
-        public int ExitCode { get; set; } = 0;
         public string FullDetailsJson { get; set; } = string.Empty;
     }
 }

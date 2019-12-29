@@ -6,7 +6,7 @@ JobFac service interface definitions as Microsoft Orleans grains. .NET client ap
 JobFac clients need only inject `IJobFacServiceProvider` -- they don't need to know anything about Orleans or grains. That interface provides three simple methods:
 
 * `GetJobFactory()`
-* `GetJob(jobInstanceId)`
-* `GetSequence(sequenceInstanceId)`
+* `GetExternalProcessJob(instanceId)`
+* `GetSequenceJob(instanceId)`
 
 

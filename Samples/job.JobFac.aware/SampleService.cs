@@ -23,10 +23,10 @@ namespace job.JobFac.aware
 
         protected override async Task ExecuteAsync()
         {
-            IJob jobService = null;
+            IJobExternalProcess jobService = null;
             try
             {
-                jobService = jobFacServices.GetJob(Program.JobInstanceKey);
+                jobService = jobFacServices.GetExternalProcessJob(Program.JobInstanceKey);
                 if (jobService == null)
                     throw new Exception($"Unable to connect to job service (instance {Program.JobInstanceKey}");
 

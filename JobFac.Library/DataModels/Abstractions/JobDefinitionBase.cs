@@ -1,8 +1,10 @@
-﻿namespace JobFac.Library.DataModels
+﻿namespace JobFac.Library.DataModels.Abstractions
 {
-    public abstract class BaseDefinition
+    public class JobDefinitionBase
     {
         public string Id { get; set; } = string.Empty;
+        public JobType JobType { get; set; } = JobType.Unknown;
+
         public string Category { get; set; } = string.Empty;
         public string Name { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;

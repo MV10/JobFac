@@ -23,59 +23,15 @@ namespace JobFac.Services.Runtime
             this.historyRepo = historyRepo;
         }
 
-        public async Task<string> StartJob(FactoryStartOptions options)
-        {
-            options.ThrowIfInvalid();
-
-            var id = options.DefinitionId;
-
-            var jobDefinition = await definitionRepo.GetJobDefinition(id);
-            if (jobDefinition == null)
-                throw new Exception("Invalid job definition id");
-
-            if (options.ReplacementArguments.ContainsKey(id) && !jobDefinition.AllowReplacementArguments)
-                throw new Exception($"Job definition {id} does not allow replacement arguments");
-
-            if (options.StartupPayloads.ContainsKey(id) && !jobDefinition.IsJobFacAware)
-                throw new Exception($"Job definition {id} is not JobFac-aware and doesn't support startup payloads");
-
-            if (jobDefinition.AlreadyRunningAction != AlreadyRunningAction.StartNormally)
-            {
-                var instances = await historyRepo.GetActiveJobInstanceIds(id);
-                if(instances.Count > 0)
-                {
-                    // TODO job-already-running notifications
-
-                    if (jobDefinition.AlreadyRunningAction == AlreadyRunningAction.DoNotStart)
-                        throw new Exception($"Job definition {id} is already running and is not configured to start additional instances");
-
-                    if(jobDefinition.AlreadyRunningAction == AlreadyRunningAction.StopOthersBeforeStarting)
-                    {
-                        foreach(var key in instances)
-                        {
-                            var otherJob = GrainFactory.GetGrain<IJob>(key);
-                            await otherJob.Stop();
-                        }
-                    }
-                }
-            }
-
-            var jobInstanceKey = Formatting.NewInstanceKey;
-            var jobGrain = GrainFactory.GetGrain<IJob>(jobInstanceKey);
-            await jobGrain.Start(jobDefinition, options);
-
-            return jobInstanceKey;
-        }
-
         public async Task<string> StartJob(FactoryStartOptions options, string replacementArguments = null, string startupPayload = null)
         {
-            if(replacementArguments != null)
+            if (replacementArguments != null)
             {
                 options.ReplacementArguments.Clear();
                 options.ReplacementArguments.Add(options.DefinitionId, replacementArguments);
             }
 
-            if(startupPayload != null)
+            if (startupPayload != null)
             {
                 options.StartupPayloads.Clear();
                 options.StartupPayloads.Add(options.DefinitionId, startupPayload);
@@ -84,32 +40,70 @@ namespace JobFac.Services.Runtime
             return await StartJob(options);
         }
 
-        public async Task<string> StartSequence(FactoryStartOptions options)
+        public async Task<string> StartJob(FactoryStartOptions options)
         {
             options.ThrowIfInvalid();
 
-            // TODO actually start a sequence
+            var jobType = await definitionRepo.GetJobType(options.DefinitionId);
 
-            var sequenceInstanceKey = Formatting.NewInstanceKey;
-            return sequenceInstanceKey;
+            return jobType switch
+            {
+                JobType.ExternalProcess => await StartJobExternalProcess(options),
+                JobType.Sequence => await StartJobSequence(options),
+                _ => throw new Exception($"Job definition {options.DefinitionId} is not a type that can be started"),
+            };
         }
 
         public async Task<IReadOnlyList<string>> GetRunningJobInstanceIds(string definitionId)
+            => await historyRepo.GetActiveJobInstanceIds(definitionId);
+
+        private async Task<string> StartJobExternalProcess(FactoryStartOptions options)
         {
-            var jobDefinition = await definitionRepo.GetJobDefinition(definitionId);
+            var id = options.DefinitionId;
+
+            var jobDefinition = await definitionRepo.GetJobDefinition<DefinitionExternalProcess>(id);
             if (jobDefinition == null)
                 throw new Exception("Invalid job definition id");
 
-            return await historyRepo.GetActiveJobInstanceIds(definitionId);
+            if (options.ReplacementArguments.ContainsKey(id) && !jobDefinition.JobTypeProperties.AllowReplacementArguments)
+                throw new Exception($"Job definition {id} does not allow replacement arguments");
+
+            if (options.StartupPayloads.ContainsKey(id) && !jobDefinition.JobTypeProperties.IsJobFacAware)
+                throw new Exception($"Job definition {id} is not JobFac-aware and doesn't support startup payloads");
+
+            if (jobDefinition.AlreadyRunningAction != AlreadyRunningAction.StartNormally)
+            {
+                var instances = await historyRepo.GetActiveJobInstanceIds(id);
+                if (instances.Count > 0)
+                {
+                    // TODO job-already-running notifications
+
+                    if (jobDefinition.AlreadyRunningAction == AlreadyRunningAction.DoNotStart)
+                        throw new Exception($"Job definition {id} is already running and is not configured to start additional instances");
+
+                    if (jobDefinition.AlreadyRunningAction == AlreadyRunningAction.StopOthersBeforeStarting)
+                    {
+                        foreach (var key in instances)
+                        {
+                            var otherJob = GrainFactory.GetGrain<IJobExternalProcess>(key);
+                            await otherJob.Stop();
+                        }
+                    }
+                }
+            }
+
+            var jobInstanceKey = Formatting.NewInstanceKey;
+
+            var jobGrain = GrainFactory.GetGrain<IJobExternalProcess>(jobInstanceKey);
+            await jobGrain.Start(jobDefinition, options);
+
+            return jobInstanceKey;
         }
 
-        public async Task<IReadOnlyList<string>> GetRunningSequenceInstanceIds(string definitionId)
+        private async Task<string> StartJobSequence(FactoryStartOptions options)
         {
-            var jobDefinition = await definitionRepo.GetSequenceDefinition(definitionId);
-            if (jobDefinition == null)
-                throw new Exception("Invalid sequence definition id");
-
-            return await historyRepo.GetActiveSequenceInstanceIds(definitionId);
+            // TODO start a sequenced job
+            return string.Empty;
         }
     }
 }

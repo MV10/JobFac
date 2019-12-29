@@ -1,4 +1,5 @@
-﻿using System;
+﻿using JobFac.Library.DataModels.Abstractions;
+using System;
 
 // TODO consider validating format for individual options (ex. each ScheduleDateMode vs ScheduleDates content)
 
@@ -6,45 +7,59 @@ namespace JobFac.Library.DataModels
 {
     public static class DefinitionValidationExtensions
     {
-        public static void ThrowIfInvalid(this JobDefinition def)
+        public static void ThrowIfInvalid(this JobDefinition<DefinitionExternalProcess> def)
         {
-            ((BaseDefinition)def).ThrowIfInvalid();
+            ((JobDefinitionBase)def).ThrowIfInvalid();
 
-            if (!def.ExecutablePathname.HasContent())
+            var props = def.JobTypeProperties;
+
+            if (!props.ExecutablePathname.HasContent())
                 Throw("ExecutablePathname required");
 
-            if (!def.WorkingDirectory.HasContent())
+            if (!props.WorkingDirectory.HasContent())
                 Throw("WorkingDirectory required");
 
-            if (def.Username.HasContent() && !def.Password.HasContent())
+            if (props.Username.HasContent() && !props.Password.HasContent())
                 Throw("Password is required when Username is specified");
 
-            if (def.CaptureStdOut.IsFileBased() && !def.StdOutPathname.HasContent())
+            if (props.CaptureStdOut.IsFileBased() && !props.StdOutPathname.HasContent())
                 Throw("StdOutPathname must be set for file-based CaptureStdOut settings");
 
-            if (def.CaptureStdErr.IsFileBased() && !def.StdErrPathname.HasContent())
+            if (props.CaptureStdErr.IsFileBased() && !props.StdErrPathname.HasContent())
                 Throw("StdErrPathname must be set for file-based CaptureStdErr settings");
 
-            if (def.CaptureStdOut == JobStreamHandling.TimestampedFile && !def.StdOutPathname.Contains("*"))
+            if (props.CaptureStdOut == JobStreamHandling.TimestampedFile && !props.StdOutPathname.Contains("*"))
                 Throw("StdOutPathname must contain an asterisk for timestamped-file CaptureStdOut settings");
 
-            if (def.CaptureStdErr == JobStreamHandling.TimestampedFile && !def.StdErrPathname.Contains("*"))
+            if (props.CaptureStdErr == JobStreamHandling.TimestampedFile && !props.StdErrPathname.Contains("*"))
                 Throw("StdErrPathname must contain an asterisk for timestamped-file CaptureStdErr settings");
 
-            if (def.ObserveMaximumRunTime && def.MaximumRunSeconds < 1)
+            if (props.ObserveMaximumRunTime && props.MaximumRunSeconds < 1)
                 Throw("ObserveMaximumRunTime requires MaximumRunSeconds of 1 second or greater");
 
-            if (def.MaximumRunTimeNotificationTargetType != NotificationTargetType.None && !def.MaximumRunTimeNotificationTarget.HasContent())
+            if (props.MaximumRunTimeNotificationTargetType != NotificationTargetType.None && !props.MaximumRunTimeNotificationTarget.HasContent())
                 Throw("setting MaximumRunTimeNotificationTargetType requires a value in MaximumRunTimeNotificationTarget field");
 
-            if (def.RetryWhenFailed && def.MaximumRetryCount < 1)
+            if (props.RetryWhenFailed && props.MaximumRetryCount < 1)
                 Throw("RetryWhenFailed requires MaximumRetryCount of 1 or greater");
         }
 
-        public static void ThrowIfInvalid(this SequenceDefinition def)
+        private static void ThrowIfInvalid(this JobDefinitionBase def)
         {
-            ((BaseDefinition)def).ThrowIfInvalid();
-            // currently sequences don't have anything to validate
+            if (def.ScheduleDateMode != ScheduleDateMode.Unscheduled && !def.ScheduleDates.HasContent())
+                Throw("setting ScheduleDateMode requires a value in ScheduleDates field");
+
+            if (def.ScheduleTimeMode != ScheduleTimeMode.Unscheduled && !def.ScheduleTimes.HasContent())
+                Throw("setting ScheduleTimeMode requires a value in ScheduleTimes field");
+
+            if (def.ExecutionNotificationTargetType != NotificationTargetType.None && !def.ExecutionNotificationTarget.HasContent())
+                Throw("setting ExecutionNotificationTargetType requires a value in ExecutionNotificationTarget field");
+
+            if (def.SuccessNotificationTargetType != NotificationTargetType.None && !def.SuccessNotificationTarget.HasContent())
+                Throw("setting SuccessNotificationTargetType requires a value in SuccessNotificationTarget field");
+
+            if (def.FailureNotificationTargetType != NotificationTargetType.None && !def.FailureNotificationTarget.HasContent())
+                Throw("setting FailureNotificationTargetType requires a value in FailureNotificationTarget field");
         }
 
         public static void ThrowIfInvalid(this StepDefinition def)
@@ -84,24 +99,6 @@ namespace JobFac.Library.DataModels
 
             if (opt.NotificationScope != NotificationScope.None && opt.NotificationTargetType != NotificationTargetType.None && !opt.NotificationTarget.HasContent())
                 Throw("setting NotificationTargetType requires a value in NotificationTarget field");
-        }
-
-        private static void ThrowIfInvalid(this BaseDefinition def)
-        {
-            if (def.ScheduleDateMode != ScheduleDateMode.None && !def.ScheduleDates.HasContent())
-                Throw("setting ScheduleDateMode requires a value in ScheduleDates field");
-
-            if (def.ScheduleTimeMode != ScheduleTimeMode.None && !def.ScheduleTimes.HasContent())
-                Throw("setting ScheduleTimeMode requires a value in ScheduleTimes field");
-
-            if (def.ExecutionNotificationTargetType != NotificationTargetType.None && !def.ExecutionNotificationTarget.HasContent())
-                Throw("setting ExecutionNotificationTargetType requires a value in ExecutionNotificationTarget field");
-
-            if (def.SuccessNotificationTargetType != NotificationTargetType.None && !def.SuccessNotificationTarget.HasContent())
-                Throw("setting SuccessNotificationTargetType requires a value in SuccessNotificationTarget field");
-
-            if (def.FailureNotificationTargetType != NotificationTargetType.None && !def.FailureNotificationTarget.HasContent())
-                Throw("setting FailureNotificationTargetType requires a value in FailureNotificationTarget field");
         }
 
         private static void Throw(string message)

@@ -10,8 +10,6 @@ namespace JobFac.Services
     {
         Task<string> StartJob(FactoryStartOptions options);
         Task<string> StartJob(FactoryStartOptions options, string replacementArguments = null, string startupPayload = null);
-        Task<string> StartSequence(FactoryStartOptions options);
         Task<IReadOnlyList<string>> GetRunningJobInstanceIds(string definitionId);
-        Task<IReadOnlyList<string>> GetRunningSequenceInstanceIds(string definitionId);
     }
 }

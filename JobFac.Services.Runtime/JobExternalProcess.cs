@@ -1,7 +1,7 @@
 ﻿using JobFac.Library.Database;
 using JobFac.Library.Constants;
 using JobFac.Library.DataModels;
-using JobFac.Services;
+using JobFac.Library.DataModels.Abstractions;
 using Microsoft.Extensions.Configuration;
 using Orleans;
 using System;
@@ -13,16 +13,16 @@ using System.Threading.Tasks;
 
 namespace JobFac.Services.Runtime
 {
-    public class Job : Grain, IJob
+    public class JobExternalProcess : Grain, IJobExternalProcess
     {
         private string jobInstanceKey = null;
-        private JobStatus status = null;
-        private JobDefinition jobDefinition = null;
+        private JobStatus<StatusExternalProcess> status = null;
+        private JobDefinition<DefinitionExternalProcess> jobDefinition = null;
 
         private readonly HistoryRepository historyRepo;
         private readonly string runnerExecutablePathname;
 
-        public Job(HistoryRepository history, IConfiguration configuration)
+        public JobExternalProcess(HistoryRepository history, IConfiguration configuration)
         {
             historyRepo = history;
             runnerExecutablePathname = configuration.GetValue<string>(ConstConfigKeys.RunnerExecutablePathname);
@@ -32,10 +32,10 @@ namespace JobFac.Services.Runtime
         {
             jobInstanceKey = this.GetPrimaryKeyString();
             var history = await historyRepo.GetJobHistory(jobInstanceKey);
-            if(history != null) status = historyRepo.DeserializeDetails(history);
+            if(history != null) status = historyRepo.DeserializeDetails<StatusExternalProcess>(history);
         }
 
-        public async Task Start(JobDefinition jobDefinition, FactoryStartOptions options)
+        public async Task Start(JobDefinition<DefinitionExternalProcess> jobDefinition, FactoryStartOptions options)
         {
             if (status != null)
                 throw new Exception($"Job has already been started (instance {jobInstanceKey})");
@@ -44,13 +44,13 @@ namespace JobFac.Services.Runtime
 
             this.jobDefinition = jobDefinition;
 
-            status = new JobStatus
+            status = new JobStatus<StatusExternalProcess>
             {
                 Key = jobInstanceKey,
                 StartOptions = options,
                 LastUpdated = DateTimeOffset.UtcNow,
-                MachineName = Dns.GetHostName().HasContent() ? Dns.GetHostName() : Environment.MachineName
             };
+            status.JobTypeProperties.MachineName = Dns.GetHostName().HasContent() ? Dns.GetHostName() : Environment.MachineName;
             await historyRepo.InsertStatus(status);
 
             await LaunchRunner();
@@ -58,7 +58,7 @@ namespace JobFac.Services.Runtime
             // TODO add startup timeout to check whether RunStatus changes from Unknown (requires grain timer support)
         }
 
-        public Task<JobDefinition> GetDefinition()
+        public Task<JobDefinition<DefinitionExternalProcess>> GetDefinition()
         {
             if (jobDefinition == null)
                 throw new Exception($"Job has not been started (instance {jobInstanceKey})");
@@ -66,7 +66,7 @@ namespace JobFac.Services.Runtime
             return Task.FromResult(jobDefinition);
         }
 
-        public Task<JobStatus> GetStatus()
+        public Task<JobStatus<StatusExternalProcess>> GetStatus()
         {
             if (status == null)
                 throw new Exception($"Job has not been started (instance {jobInstanceKey})");
@@ -91,8 +91,8 @@ namespace JobFac.Services.Runtime
             if (status.HasExited)
                 throw new Exception($"Job has already exited (instance {jobInstanceKey})");
 
-            status.ExitCode = exitCode;
-            status.ExitMessage = exitMessage;
+            status.JobTypeProperties.ExitCode = exitCode;
+            status.JobTypeProperties.ExitMessage = exitMessage;
             await StoreNewRunStatus(runStatus);
         }
 

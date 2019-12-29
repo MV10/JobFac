@@ -36,7 +36,7 @@ namespace ConsoleTests
 
                 Console.WriteLine("Waiting 15 seconds then will kill job.");
                 await Task.Delay(15000);
-                var job = jobFacServices.GetJob(jobKey);
+                var job = jobFacServices.GetExternalProcessJob(jobKey);
                 if (job != null)
                 {
                     var status = await job.GetStatus();

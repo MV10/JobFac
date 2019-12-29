@@ -28,9 +28,9 @@ namespace ConsoleTests
                     svc.AddDatabaseServices();
 
                     //svc.AddHostedService<TestDatabaseRepository>();
-                    //svc.AddHostedService<TestJobMonitoring>();
+                    svc.AddHostedService<TestJobMonitoring>();
                     //svc.AddHostedService<TestJobKilling>();
-                    svc.AddHostedService<TestJobPayload>();
+                    //svc.AddHostedService<TestJobPayload>();
                 });
 
                 await host.RunConsoleAsync();

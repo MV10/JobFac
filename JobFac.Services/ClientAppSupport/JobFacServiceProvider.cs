@@ -12,14 +12,11 @@ namespace JobFac.Services
             this.clusterClient = clusterClient;
         }
 
-        public IJob GetJob(string jobInstanceId)
-            => clusterClient.GetGrain<IJob>(jobInstanceId);
+        public IJobExternalProcess GetExternalProcessJob(string instanceId)
+            => clusterClient.GetGrain<IJobExternalProcess>(instanceId);
 
         public IJobFactory GetJobFactory()
             => clusterClient.GetGrain<IJobFactory>(0);
-
-        public ISequence GetSequence(string sequenceInstanceId)
-            => clusterClient.GetGrain<ISequence>(sequenceInstanceId);
 
         public async ValueTask DisposeAsync()
         {

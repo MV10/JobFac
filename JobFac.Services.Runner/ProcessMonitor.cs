@@ -1,5 +1,6 @@
 ﻿using JobFac.Library;
 using JobFac.Library.DataModels;
+using JobFac.Library.DataModels.Abstractions;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System;
@@ -29,12 +30,12 @@ namespace JobFac.Services.Runner
 
         protected override async Task ExecuteAsync()
         {
-            IJob jobService = null;
+            IJobExternalProcess jobService = null;
 
             try
             {
                 logger.LogTrace($"Runner starting, job instance {Program.JobInstanceKey}");
-                jobService = jobFacServices.GetJob(Program.JobInstanceKey);
+                jobService = jobFacServices.GetExternalProcessJob(Program.JobInstanceKey);
                 if (jobService == null)
                 {
                     logger.LogError("Runner was unable to obtain a reference to the Job service");
@@ -58,7 +59,7 @@ namespace JobFac.Services.Runner
             }
         }
 
-        private async Task RunJob(IJob jobService, JobDefinition jobDef)
+        private async Task RunJob(IJobExternalProcess jobService, JobDefinition<DefinitionExternalProcess> jobDef)
         {
             logger.LogTrace($"RunJob starting");
             var tokenSource = new CancellationTokenSource();
@@ -70,47 +71,49 @@ namespace JobFac.Services.Runner
             StreamWriter fileStdOut = null;
             StreamWriter fileStdErr = null;
 
+            var jobProps = jobDef.JobTypeProperties;
+
             var proc = new Process();
-            proc.StartInfo.FileName = jobDef.ExecutablePathname;
-            proc.StartInfo.WorkingDirectory = jobDef.WorkingDirectory;
+            proc.StartInfo.FileName = jobProps.ExecutablePathname;
+            proc.StartInfo.WorkingDirectory = jobProps.WorkingDirectory;
             proc.StartInfo.UseShellExecute = false;
             proc.StartInfo.CreateNoWindow = true;
 
             // for JobProc-aware jobs, first argument is the job instance key
-            proc.StartInfo.Arguments = (jobDef.IsJobFacAware) ? $"{Program.JobInstanceKey} {jobDef.Arguments}" : jobDef.Arguments;
+            proc.StartInfo.Arguments = (jobProps.IsJobFacAware) ? $"{Program.JobInstanceKey} {jobProps.Arguments}" : jobProps.Arguments;
 
             try
             {
-                if (jobDef.CaptureStdOut != JobStreamHandling.None)
+                if (jobProps.CaptureStdOut != JobStreamHandling.None)
                 {
                     proc.StartInfo.RedirectStandardOutput = true;
 
-                    if(jobDef.CaptureStdOut == JobStreamHandling.Database)
+                    if(jobProps.CaptureStdOut == JobStreamHandling.Database)
                         proc.OutputDataReceived += (s, e) => { if (e?.Data != null) dbStdOut.AppendLine(e.Data); };
 
-                    if(jobDef.CaptureStdOut.IsFileBased())
+                    if(jobProps.CaptureStdOut.IsFileBased())
                     {
-                        var pathname = jobDef.CaptureStdOut == JobStreamHandling.TimestampedFile
-                            ? jobDef.StdOutPathname.Replace("*", Formatting.FilenameTimestampUtcNow)
-                            : jobDef.StdOutPathname;
-                        fileStdOut = new StreamWriter(pathname, jobDef.CaptureStdOut == JobStreamHandling.AppendFile);
+                        var pathname = jobProps.CaptureStdOut == JobStreamHandling.TimestampedFile
+                            ? jobProps.StdOutPathname.Replace("*", Formatting.FilenameTimestampUtcNow)
+                            : jobProps.StdOutPathname;
+                        fileStdOut = new StreamWriter(pathname, jobProps.CaptureStdOut == JobStreamHandling.AppendFile);
                         proc.OutputDataReceived += (s, e) => { if (e?.Data != null) fileStdOut.WriteLineAsync(e.Data); };
                     }
                 }
 
-                if (jobDef.CaptureStdErr != JobStreamHandling.None)
+                if (jobProps.CaptureStdErr != JobStreamHandling.None)
                 {
                     proc.StartInfo.RedirectStandardError = true;
 
-                    if (jobDef.CaptureStdErr == JobStreamHandling.Database)
+                    if (jobProps.CaptureStdErr == JobStreamHandling.Database)
                         proc.ErrorDataReceived += (s, e) => { if (e?.Data != null) dbStdErr.AppendLine(e.Data); };
 
-                    if (jobDef.CaptureStdErr.IsFileBased())
+                    if (jobProps.CaptureStdErr.IsFileBased())
                     {
-                        var pathname = jobDef.CaptureStdErr == JobStreamHandling.TimestampedFile
-                            ? jobDef.StdErrPathname.Replace("*", Formatting.FilenameTimestampUtcNow)
-                            : jobDef.StdErrPathname;
-                        fileStdErr = new StreamWriter(pathname, jobDef.CaptureStdErr == JobStreamHandling.AppendFile);
+                        var pathname = jobProps.CaptureStdErr == JobStreamHandling.TimestampedFile
+                            ? jobProps.StdErrPathname.Replace("*", Formatting.FilenameTimestampUtcNow)
+                            : jobProps.StdErrPathname;
+                        fileStdErr = new StreamWriter(pathname, jobProps.CaptureStdErr == JobStreamHandling.AppendFile);
                         proc.ErrorDataReceived += (s, e) => { if (e?.Data != null) fileStdErr.WriteLineAsync(e.Data); };
                     }
                 }
@@ -132,8 +135,8 @@ namespace JobFac.Services.Runner
                 }
 
                 // These must be as close to proc.Start as possible to minimize the possibility of lost output
-                if (jobDef.CaptureStdOut != JobStreamHandling.None) proc.BeginOutputReadLine();
-                if (jobDef.CaptureStdErr != JobStreamHandling.None) proc.BeginErrorReadLine();
+                if (jobProps.CaptureStdOut != JobStreamHandling.None) proc.BeginOutputReadLine();
+                if (jobProps.CaptureStdErr != JobStreamHandling.None) proc.BeginErrorReadLine();
 
                 await jobService.UpdateRunStatus(RunStatus.Running);
 
@@ -156,7 +159,7 @@ namespace JobFac.Services.Runner
                 else
                 {
                     // when true, job is JobProc-aware and should have called UpdateExitMessage
-                    if (!jobDef.IsJobFacAware)
+                    if (!jobProps.IsJobFacAware)
                     {
                         var finalStatus = (proc.ExitCode < 0) ? RunStatus.Failed : RunStatus.Ended;
                         await jobService.UpdateExitMessage(finalStatus, proc.ExitCode, string.Empty);
@@ -169,7 +172,7 @@ namespace JobFac.Services.Runner
 
                 // The Process WaitForExit call without a timeout value is the
                 // only way to asynchronously wait for the streams to drain.
-                if (jobDef.CaptureStdOut != JobStreamHandling.None || jobDef.CaptureStdErr != JobStreamHandling.None)
+                if (jobProps.CaptureStdOut != JobStreamHandling.None || jobProps.CaptureStdErr != JobStreamHandling.None)
                     proc.WaitForExit();
             }
             catch(Exception ex)
@@ -193,7 +196,7 @@ namespace JobFac.Services.Runner
                 fileStdErr?.Dispose();
             }
 
-            if (jobDef.CaptureStdOut == JobStreamHandling.Database || jobDef.CaptureStdErr == JobStreamHandling.Database)
+            if (jobProps.CaptureStdOut == JobStreamHandling.Database || jobProps.CaptureStdErr == JobStreamHandling.Database)
                 await jobService.WriteCapturedOutput(Program.JobInstanceKey, dbStdOut.ToString(), dbStdErr.ToString());
 
             logger.LogTrace($"RunJob exiting");
