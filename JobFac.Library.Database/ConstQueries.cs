@@ -31,5 +31,8 @@ namespace JobFac.Library.Database
         public static readonly string InsertCapturedOutput = @"INSERT INTO CapturedOutput
         (InstanceKey, StdOut, StdErr)
         VALUES (@InstanceKey, @StdOut, @StdErr)";
+
+        public static readonly string SelectPendingScheduledJobs = "SELECT * FROM ScheduledJobs WHERE Activation = '' AND ScheduleTarget <= @ScheduleTarget;";
+        public static readonly string UpdateScheduledJobActivation = "UPDATE ScheduledJobs SET Activation = @Activation WHERE ScheduleTarget = @ScheduleTarget AND DefinitionId = @DefinitionId;";
     }
 }

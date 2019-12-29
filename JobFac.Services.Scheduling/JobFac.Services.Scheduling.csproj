@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
@@ -20,5 +20,5 @@
     <ProjectReference Include="..\JobFac.Library\JobFac.Library.csproj" />
     <ProjectReference Include="..\JobFac.Services\JobFac.Services.csproj" />
   </ItemGroup>
-  
+
 </Project>

@@ -33,7 +33,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ConsoleTests", "ConsoleTest
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DevConsoleHost", "DevConsoleHost\DevConsoleHost.csproj", "{44530D15-6C0D-4E11-9C7C-A3C40269A4D7}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JobFac.Library.Logging", "JobFac.Library.Logging\JobFac.Library.Logging.csproj", "{4187EFA3-A6F0-40E5-BBFF-EACBF4DFC224}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JobFac.Library.Logging", "JobFac.Library.Logging\JobFac.Library.Logging.csproj", "{4187EFA3-A6F0-40E5-BBFF-EACBF4DFC224}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JobFac.Services.Scheduling", "JobFac.Services.Scheduling\JobFac.Services.Scheduling.csproj", "{8ECBE78D-EA23-4ADF-8EAD-159EAEAA8334}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -88,6 +90,10 @@ Global
 		{4187EFA3-A6F0-40E5-BBFF-EACBF4DFC224}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4187EFA3-A6F0-40E5-BBFF-EACBF4DFC224}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4187EFA3-A6F0-40E5-BBFF-EACBF4DFC224}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8ECBE78D-EA23-4ADF-8EAD-159EAEAA8334}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8ECBE78D-EA23-4ADF-8EAD-159EAEAA8334}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8ECBE78D-EA23-4ADF-8EAD-159EAEAA8334}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8ECBE78D-EA23-4ADF-8EAD-159EAEAA8334}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

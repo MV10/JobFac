@@ -3,11 +3,10 @@
     public enum ScheduleDateMode
     {
         Unscheduled = 0,
-        DaysOfWeek = 1,         // 0-6 with commas
-        FirstLastWeekday = 2,   // first/last
-        DaysOfMonth = 3,        // numeric with commas, or first/last
-        SpecificDate = 4,       // mm/dd
-        DateRangeInclusive = 5, // mm/dd, mm/dd
-        DateRangeExclusive = 6, // mm/dd, mm/dd
+        DaysOfWeek = 1,         // any of 0-6 with commas
+        DaysOfMonth = 2,        // any numeric with commas, or first,last
+        SpecificDates = 3,      // mm/dd,mm/dd,mm/dd
+        DateRanges = 4,         // mm/dd-mm/dd,mm/dd-mm/dd (inclusive)
+        WeekdaysOfMonth = 5,    // first,last
     }
 }

@@ -6,6 +6,7 @@ DROP TABLE [dbo].[JobExternalProcess];
 DROP TABLE [dbo].[JobHistory];
 DROP TABLE [dbo].[StepDefinition];
 DROP TABLE [dbo].[CapturedOutput];
+DROP TABLE [dbo].[ScheduledJobs];
 GO
 
 -- Uniqueness and all reads are by Id only
@@ -72,7 +73,6 @@ GO
 CREATE UNIQUE NONCLUSTERED INDEX IX_JobExternalProcess ON
 [dbo].[JobExternalProcess] ([Id] ASC);
 GO
-
 
 -- Uniqueness and all reads are by InstanceKey
 -- Also has query index on DefintionId + LastUpdated
@@ -141,3 +141,25 @@ GO
 CREATE UNIQUE NONCLUSTERED INDEX IX_CapturedOutput ON
 [dbo].[CapturedOutput] ([InstanceKey] ASC);
 GO
+
+-- Uniqueness is by ScheduleTarget + DefinitionId
+CREATE TABLE [dbo].[ScheduledJobs]
+(
+	[DefinitionId] NVARCHAR(128) NOT NULL, 
+    [ScheduleTarget] BIGINT NOT NULL, -- yyyyMMddHHmm
+    [Activation] NVARCHAR(64) NOT NULL
+)
+GO
+
+CREATE UNIQUE NONCLUSTERED INDEX IX_ScheduledJobs ON
+[dbo].[ScheduledJobs] ([ScheduleTarget] ASC, [DefinitionId] ASC);
+GO
+
+CREATE UNIQUE NONCLUSTERED INDEX IX_ScheduledJobsPending ON
+[dbo].[ScheduledJobs] ([Activation] ASC, [ScheduleTarget] ASC, [DefinitionId] ASC);
+GO
+
+CREATE NONCLUSTERED INDEX IX_ScheduledJobsIdOnly ON
+[dbo].[ScheduledJobs] ([DefinitionId] ASC);
+GO
+
