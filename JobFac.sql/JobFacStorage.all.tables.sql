@@ -177,6 +177,5 @@ TRUNCATE TABLE [dbo].[Config];
 INSERT INTO [dbo].[Config] ([ConfigKey], [ConfigValue]) VALUES
 ('ScheduleWriterLastRunDate', '20011031'),      -- random early value (Halloween 2001!)
 ('ScheduleWriterRunTarget', '2230'),            -- 10:30 PM daily
-('SchedulerQueueCachePeriodMinutes', '30'),     -- queues 30 minutes of schedule entries, at most
 ('SchedulerQueueMaxJobAssignment', '10')        -- each SchedulerService is assigned no more than 20 per request
 GO

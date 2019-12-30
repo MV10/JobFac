@@ -1,4 +1,5 @@
-﻿using Orleans;
+﻿using JobFac.Library.DataModels;
+using Orleans;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -8,6 +9,6 @@ namespace JobFac.Services.Scheduling
     {
         Task SchedulerServiceStarting(string schedulerServiceId);
         Task SchedulerServiceStopping(string schedulerServiceId);
-        Task<IReadOnlyList<JobAssignment>> GetJobAssignments(string schedulerServiceId);
+        Task<IReadOnlyList<PendingScheduledJob>> GetJobAssignments(string schedulerServiceId);
     }
 }

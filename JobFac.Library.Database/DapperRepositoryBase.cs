@@ -1,5 +1,4 @@
 ﻿using Dapper;
-using JobFac.Library;
 using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
@@ -19,6 +18,9 @@ namespace JobFac.Library.Database
         }
 
         private protected async Task<IReadOnlyList<T>> QueryAsync<T>(string sql, object param)
+            => await QueryMutableAsync<T>(sql, param).ConfigureAwait(false);
+
+        private protected async Task<List<T>> QueryMutableAsync<T>(string sql, object param)
         {
             using var conn = new SqlConnection(connectionString);
             await conn.OpenAsync().ConfigureAwait(false);

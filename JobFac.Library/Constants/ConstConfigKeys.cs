@@ -15,7 +15,6 @@ namespace JobFac.Library
 
         public static readonly string ScheduleWriterLastRunDate = "ScheduleWriterLastRunDate";
         public static readonly string ScheduleWriterRunTarget = "ScheduleWriterRunTarget";
-        public static readonly string SchedulerQueueCachePeriodMinutes = "SchedulerQueueCachePeriodMinutes";
         public static readonly string SchedulerQueueMaxJobAssignment = "SchedulerQueueMaxJobAssignment";
     }
 }
