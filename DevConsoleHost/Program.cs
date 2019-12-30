@@ -1,4 +1,4 @@
-﻿using JobFac.Library.Constants;
+﻿using JobFac.Library;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -32,21 +32,25 @@ namespace DevConsoleHost
 
                     // JobFac Runner currently uses info, error, and trace
                     //.AddFilter(ConstLogging.JobFacLoggerProviderName, LogLevel.Trace)
+                    
+                    // See everything with a JobFac prefix:
+                    .AddFilter("JobFac", LogLevel.Trace)
 
                     .AddDebug() // VS Debug window
                     .AddConsole();
                 });
 
+                // TODO create UseJobFac extension to wrap UseOrleans
                 host.UseOrleans(builder =>
                 {
                     builder
 
                     // TODO use real configuration
                     .UseLocalhostClustering() // cluster and service IDs default to "dev"
-
                     .Configure<EndpointOptions>(options => options.AdvertisedIPAddress = IPAddress.Loopback)
 
-                    .AddJobFacRuntimeParts();
+                    .AddJobFacRuntimeServices()
+                    .AddJobFacSchedulingServices(); // TODO make scheduler services optional based on appconfig.json
                 });
 
                 host.ConfigureServices((hostContext, services) =>

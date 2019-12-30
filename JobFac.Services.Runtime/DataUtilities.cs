@@ -1,4 +1,4 @@
-﻿using JobFac.Library.Constants;
+﻿using JobFac.Library;
 using JobFac.Library.Database;
 using JobFac.Library.DataModels;
 using JobFac.Services;

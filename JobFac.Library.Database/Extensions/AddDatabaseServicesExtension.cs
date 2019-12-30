@@ -6,7 +6,10 @@ namespace Microsoft.Extensions.DependencyInjection
     {
         public static IServiceCollection AddDatabaseServices(this IServiceCollection serviceBuilder)
             => serviceBuilder
+                .AddTransient<ConfigRepository>()
                 .AddTransient<DefinitionsRepository>()
-                .AddTransient<HistoryRepository>();
+                .AddTransient<HistoryRepository>()
+                .AddTransient<ScheduleRepository>()
+                .AddSingleton<ConfigCacheService>();
     }
 }

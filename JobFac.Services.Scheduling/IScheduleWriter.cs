@@ -1,10 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using Orleans;
+using System.Threading.Tasks;
 
 namespace JobFac.Services.Scheduling
 {
-    public interface IScheduleWriter
+    public interface IScheduleWriter : IClusterSingletonGrain
     {
+        Task WriteNewScheduleTargets();
+        Task UpdateJobSchedules(string jobDefinitionId);
     }
 }

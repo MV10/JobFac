@@ -1,4 +1,4 @@
-﻿using JobFac.Library.Constants;
+﻿using JobFac.Library;
 using JobFac.Library.DataModels;
 using JobFac.Library.DataModels.Abstractions;
 using Microsoft.Extensions.Configuration;
@@ -19,14 +19,14 @@ namespace JobFac.Library.Database
             historyRetentionDays = config.GetValue<int>(ConstConfigKeys.HistoryRetentionDays);
         }
 
-        public async Task<JobHistory> GetJobHistory(string instanceKey)
-            => await QueryOneRowAsync<JobHistory>(ConstQueries.SelectJobHistory, new { InstanceKey = instanceKey }).ConfigureAwait(false);
+        public async Task<JobHistoryTable> GetJobHistory(string instanceKey)
+            => await QueryOneRowAsync<JobHistoryTable>(ConstQueries.SelectJobHistory, new { InstanceKey = instanceKey }).ConfigureAwait(false);
 
-        public async Task<IReadOnlyList<JobHistory>> GetJobHistory(string definitionId, DateTimeOffset fromDate)
-            => await QueryAsync<JobHistory>(ConstQueries.SelectJobHistoryAfter, new { DefinitionId = definitionId, FromDate = fromDate.UtcDateTime }).ConfigureAwait(false);
+        public async Task<IReadOnlyList<JobHistoryTable>> GetJobHistory(string definitionId, DateTimeOffset fromDate)
+            => await QueryAsync<JobHistoryTable>(ConstQueries.SelectJobHistoryAfter, new { DefinitionId = definitionId, FromDate = fromDate.UtcDateTime }).ConfigureAwait(false);
 
-        public async Task<IReadOnlyList<JobHistory>> GetJobHistory(string definitionId, DateTimeOffset firstDate, DateTimeOffset lastDate)
-            => await QueryAsync<JobHistory>(ConstQueries.SelectJobHistoryBetween, new { DefinitionId = definitionId, FirstDate = firstDate.UtcDateTime, LastDate = lastDate.UtcDateTime }).ConfigureAwait(false);
+        public async Task<IReadOnlyList<JobHistoryTable>> GetJobHistory(string definitionId, DateTimeOffset firstDate, DateTimeOffset lastDate)
+            => await QueryAsync<JobHistoryTable>(ConstQueries.SelectJobHistoryBetween, new { DefinitionId = definitionId, FirstDate = firstDate.UtcDateTime, LastDate = lastDate.UtcDateTime }).ConfigureAwait(false);
 
         public async Task<IReadOnlyList<string>> GetActiveJobInstanceIds(string definitionId)
             => await QueryAsync<string>(ConstQueries.SelectJobHistoryActive, new { DefinitionId = definitionId }).ConfigureAwait(false);
@@ -53,13 +53,13 @@ namespace JobFac.Library.Database
         public async Task PurgeHistory()
             => await ExecAsync(ConstQueries.PurgeHistory, new { Now = DateTimeOffset.UtcNow }).ConfigureAwait(false);
 
-        public JobStatus<TJobTypeProperties> DeserializeDetails<TJobTypeProperties>(JobHistory history)
+        public JobStatus<TJobTypeProperties> DeserializeDetails<TJobTypeProperties>(JobHistoryTable history)
         where TJobTypeProperties : class, new()
             => JsonConvert.DeserializeObject<JobStatus<TJobTypeProperties>>(history.FullDetailsJson);
 
-        private JobHistory History<TJobTypeProperties>(JobStatus<TJobTypeProperties> status)
+        private JobHistoryTable History<TJobTypeProperties>(JobStatus<TJobTypeProperties> status)
         where TJobTypeProperties : class, new()
-            => new JobHistory
+            => new JobHistoryTable
             {
                 InstanceKey = status.Key,
                 DefinitionId = status.StartOptions.DefinitionId,

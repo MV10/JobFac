@@ -1,10 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using Orleans;
+using System.Threading.Tasks;
 
 namespace JobFac.Services.Scheduling
 {
-    public interface IScheduledExecution
+    public interface IScheduledExecution : IGrainWithStringKey
     {
+        Task StartScheduledJob(JobAssignment assignment);
     }
 }

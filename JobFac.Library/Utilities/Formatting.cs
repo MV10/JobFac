@@ -17,5 +17,7 @@ namespace JobFac.Library
 
             return string.Empty;
         }
+
+        public static long ScheduleTargetTimestamp(DateTimeOffset timestamp) => long.Parse(timestamp.ToString("yyyyMMddHHmm"));
     }
 }

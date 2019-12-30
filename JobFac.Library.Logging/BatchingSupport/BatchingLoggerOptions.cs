@@ -1,4 +1,4 @@
-﻿using JobFac.Library.Constants;
+﻿using JobFac.Library;
 using System;
 
 namespace JobFac.Library.Logging

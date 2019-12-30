@@ -1,5 +1,5 @@
 ﻿
-namespace JobFac.Library.Constants
+namespace JobFac.Library
 {
     public static class ConstLogging
     {
@@ -9,6 +9,9 @@ namespace JobFac.Library.Constants
         // is also used as the log message category when the remote message is repeated to the Silo
         // host logger, which allows the host to reference this const to filter by category.
         public const string JobFacLoggerProviderName = "JobFacRemoteLogging";
+
+        public const string JobFacCategorySchedulerService = "JobFac.SchedulerService";
+        public const string JobFacCategorySchedulerQueue = "JobFac.SchedulerQueue";
 
         public static readonly string JobFacLogCategoryPrefix = "JobFac";
         public static readonly string LogEntryTimestampFormat = "yyyy-MM-dd HH:mm:ss.fff UTC";

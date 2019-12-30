@@ -1,5 +1,5 @@
 ﻿using JobFac.Library.Database;
-using JobFac.Library.Constants;
+using JobFac.Library;
 using JobFac.Library.DataModels;
 using JobFac.Library.DataModels.Abstractions;
 using Microsoft.Extensions.Configuration;

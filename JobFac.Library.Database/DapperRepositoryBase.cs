@@ -1,5 +1,5 @@
 ﻿using Dapper;
-using JobFac.Library.Constants;
+using JobFac.Library;
 using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;

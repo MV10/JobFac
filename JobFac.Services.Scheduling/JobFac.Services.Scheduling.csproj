@@ -18,6 +18,7 @@
   <ItemGroup>
     <ProjectReference Include="..\JobFac.Library.Database\JobFac.Library.Database.csproj" />
     <ProjectReference Include="..\JobFac.Library\JobFac.Library.csproj" />
+    <ProjectReference Include="..\JobFac.Services.Runtime\JobFac.Services.Runtime.csproj" />
     <ProjectReference Include="..\JobFac.Services\JobFac.Services.csproj" />
   </ItemGroup>
 

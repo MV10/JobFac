@@ -7,6 +7,7 @@ DROP TABLE [dbo].[JobHistory];
 DROP TABLE [dbo].[StepDefinition];
 DROP TABLE [dbo].[CapturedOutput];
 DROP TABLE [dbo].[ScheduledJobs];
+DROP TABLE [dbo].[Config];
 GO
 
 -- Uniqueness and all reads are by Id only
@@ -163,3 +164,19 @@ CREATE NONCLUSTERED INDEX IX_ScheduledJobsIdOnly ON
 [dbo].[ScheduledJobs] ([DefinitionId] ASC);
 GO
 
+-- Uniqueness is by ConfigKey
+CREATE TABLE [dbo].[Config]
+(
+    [ConfigKey] NVARCHAR(128) NOT NULL, 
+    [ConfigValue] NVARCHAR(128) NOT NULL,
+    CONSTRAINT PK_Config PRIMARY KEY (ConfigKey)
+)
+GO
+
+TRUNCATE TABLE [dbo].[Config];
+INSERT INTO [dbo].[Config] ([ConfigKey], [ConfigValue]) VALUES
+('ScheduleWriterLastRunDate', '20011031'),      -- random early value (Halloween 2001!)
+('ScheduleWriterRunTarget', '2230'),            -- 10:30 PM daily
+('SchedulerQueueCachePeriodMinutes', '30'),     -- queues 30 minutes of schedule entries, at most
+('SchedulerQueueMaxJobAssignment', '10')        -- each SchedulerService is assigned no more than 20 per request
+GO

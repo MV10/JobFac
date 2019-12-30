@@ -3,7 +3,7 @@ using System;
 
 namespace JobFac.Library.Database
 {
-    public class JobHistory
+    public class JobHistoryTable
     {
         public string InstanceKey { get; set; } = string.Empty;
         public string DefinitionId { get; set; } = string.Empty;

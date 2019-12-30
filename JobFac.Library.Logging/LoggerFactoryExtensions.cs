@@ -1,4 +1,4 @@
-﻿using JobFac.Library.Constants;
+﻿using JobFac.Library;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
