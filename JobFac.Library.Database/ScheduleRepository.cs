@@ -18,7 +18,7 @@ namespace JobFac.Library.Database
         public async Task<string> GetJobActivationValue(string definitionId, DateTimeOffset scheduleTarget)
             => await QueryScalarAsync<string>(ConstQueries.SelectScheduledJobActivation, new { DefinitionId = definitionId, ScheduleTarget = scheduleTarget }).ConfigureAwait(false);
 
-        public async Task UpdatedActivationValue(string definitionId, long scheduleTarget, string activationValue)
+        public async Task UpdatedActivationValue(string definitionId, DateTimeOffset scheduleTarget, string activationValue)
             => await ExecAsync(ConstQueries.UpdateScheduledJobActivation, new { DefinitionId = definitionId, ScheduleTarget = scheduleTarget, Activation = activationValue }).ConfigureAwait(false);
 
         public async Task DeletePendingScheduledJobs(string definitionId)

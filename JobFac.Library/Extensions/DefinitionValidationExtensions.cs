@@ -15,11 +15,9 @@ namespace JobFac.Library.DataModels
                 if (!def.ScheduleDates.HasContent() || !def.ScheduleTimes.HasContent())
                     Throw("setting ScheduleDateMode requires values in ScheduleDates and ScheduleTimes fields");
 
-                if (def.ScheduleDateTimeKind == DateTimeKind.Unspecified)
-                    Throw("setting ScheduleDateMode requires a ScheduleDateTimeKind of Local or Utc");
-
                 // TODO validate ScheduleDateMode vs ScheduleDates content
                 // TODO validate ScheduleTimeMode vs ScheduleTimes content
+                // TODO validate ScheduleTimeZone vs Noda Time database
             }
 
             if (def.ExecutionNotificationTargetType != NotificationTargetType.None && !def.ExecutionNotificationTarget.HasContent())
