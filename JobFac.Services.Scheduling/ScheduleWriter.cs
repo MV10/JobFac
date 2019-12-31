@@ -241,9 +241,7 @@ namespace JobFac.Services.Scheduling
                         foreach(var min in times)
                         {
                             var minute = int.Parse(min);
-                            var target = TargetTimeUtc(hour, minute, jobDataTimeZone);
-                            if(!targetDateIsToday || filterHour < hour || (filterHour == hour && filterMinute <= minute))
-                                AddScheduleEntry(job.Id, target);
+                            TryAddEntry(hour, minute);
                         }
                     }
                     break;
@@ -253,9 +251,7 @@ namespace JobFac.Services.Scheduling
                     foreach(var time in times)
                     {
                         var (hour, minute) = GetHourMinute(time);
-                        var target = TargetTimeUtc(hour, minute, jobDataTimeZone);
-                        if (!targetDateIsToday || filterHour < hour || (filterHour == hour && filterMinute <= minute))
-                            AddScheduleEntry(job.Id, target);
+                        TryAddEntry(hour, minute);
                     }
                     break;
 
@@ -266,21 +262,34 @@ namespace JobFac.Services.Scheduling
                         int interval = int.Parse(times[0]);
                         for(int minute = 0; minute < 59; minute += interval)
                         {
-                            var target = TargetTimeUtc(hour, minute, jobDataTimeZone);
-                            if (!targetDateIsToday || filterHour < hour || (filterHour == hour && filterMinute <= minute))
-                                AddScheduleEntry(job.Id, target);
+                            TryAddEntry(hour, minute);
                         }
                     }
                     break;
             }
-        }
 
-        private DateTimeOffset TargetTimeUtc(int hour, int minute, DateTimeZone zone)
-        {
-            return new LocalDateTime(targetDate.Year, targetDay, targetMonth, hour, minute)
-                    .InZoneLeniently(zone)
-                    .WithZone(utcTimeZone)
-                    .ToDateTimeOffset();
+            void TryAddEntry(int hour, int minute)
+            {
+                try
+                {
+                    if (!targetDateIsToday || filterHour < hour || (filterHour == hour && filterMinute <= minute))
+                    {
+                        newSchedules.Add(new ScheduledJobsTable
+                        {
+                            DefinitionId = job.Id,
+                            ScheduleTarget = new LocalDateTime(targetDate.Year, targetMonth, targetDay, hour, minute)
+                                                .InZoneStrictly(jobDataTimeZone)
+                                                .WithZone(utcTimeZone)
+                                                .ToDateTimeOffset()
+                    });
+                    }
+                }
+                catch
+                { 
+                    // InZoneStrictly throws an exception if the date parameters
+                    // are invalid for the requested timezone.
+                }
+            }
         }
 
         // For ScheduleDateMode.DateRanges the ScheduleDates values should be date ranges in the
@@ -301,15 +310,6 @@ namespace JobFac.Services.Scheduling
             int hour = int.Parse(HHmm.Substring(0, n));
             int minute = int.Parse(HHmm.Substring(n, 2));
             return (hour, minute);
-        }
-
-        private void AddScheduleEntry(string jobDefinitionId, DateTimeOffset scheduleTarget)
-        {
-            newSchedules.Add(new ScheduledJobsTable
-            {
-                DefinitionId = jobDefinitionId,
-                ScheduleTarget = scheduleTarget
-            });
         }
 
         private async Task InsertScheduleRows()
