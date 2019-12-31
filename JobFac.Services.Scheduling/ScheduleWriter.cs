@@ -42,30 +42,18 @@ namespace JobFac.Services.Scheduling
             configCache = cache;
         }
 
+        DateTimeZone utcTimeZone = DateTimeZoneProviders.Tzdb["Etc/UTC"];
+        private List<ScheduledJobsTable> newSchedules;
+
+        // Must execute WasLastRunToday immediately to set these properly.
         private Instant today;
         private ZonedDateTime todayUtc;
-        private List<ScheduledJobsTable> newSchedules;
-        DateTimeZone utcTimeZone = DateTimeZoneProviders.Tzdb["Etc/UTC"];
 
         public async Task WriteNewScheduleTargets()
         {
-            today = SystemClock.Instance.GetCurrentInstant();
-            todayUtc = today.InUtc();
+            // Decisions about whether the once-daily run target is near enough:
 
-            // Decision about whether the once-daily run target is near enough:
-
-            Instant lastRun = Instant.MinValue;
-            try
-            {
-                // ConfigCache updates every 5 minutes (see JobFac.Library.ConstTimeouts)
-                // so it will always be up-to-date since ScheduleWriter is invoked on a
-                // 15-minute cycle (also defined in ConstTimeouts).
-                var lastRunTimestamp = await configCache.GetValue(ConstConfigKeys.ScheduleWriterLastRunDateUtc);
-                lastRun = InstantPattern.General.Parse(lastRunTimestamp).GetValueOrThrow();
-            }
-            catch
-            { }
-            if (todayUtc.Date == lastRun.InUtc().Date) return;
+            if (await WasLastRunToday()) return;
 
             // This will be an HHmm value such as 1030 or 2200; SchedulerQueue only invokes this
             // grain at 15-minute intervals, so quit unless we're near or past the run-at time.
@@ -87,8 +75,9 @@ namespace JobFac.Services.Scheduling
                 try
                 {
                     var jobDataTimeZone = DateTimeZoneProviders.Tzdb[job.ScheduleTimeZone];
+
                     targetDate = today.InZone(jobDataTimeZone).Plus(Duration.FromDays(1)).Date;
-                    targetDateIsToday = true;
+                    targetDateIsToday = false;
                     CalculateScheduleTargetValues();
                     EvaluateJobForScheduling(job);
                 }
@@ -109,18 +98,31 @@ namespace JobFac.Services.Scheduling
         {
             logger.LogInformation($"UpdateJobSchedules for job {jobDefinitionId}");
 
+            bool wasLastRunToday = await WasLastRunToday();
+
             if (removeExistingRows)
                 await scheduleRepository.DeletePendingScheduledJobs(jobDefinitionId);
 
             newSchedules = new List<ScheduledJobsTable>();
+            var job = await scheduleRepository.GetJobScheduleSettings(jobDefinitionId);
             try
             {
-                var job = await scheduleRepository.GetJobScheduleSettings(jobDefinitionId);
                 var jobDataTimeZone = DateTimeZoneProviders.Tzdb[job.ScheduleTimeZone];
+
                 targetDate = today.InZone(jobDataTimeZone).Date;
-                targetDateIsToday = false;
+                targetDateIsToday = true;
                 CalculateScheduleTargetValues();
                 EvaluateJobForScheduling(job);
+
+                // If we've already set up tomorrow's schedules (for all jobs)
+                // do a second pass for this job targeting tomorrow's date.
+                if(wasLastRunToday)
+                {
+                    targetDate = today.InZone(jobDataTimeZone).Plus(Duration.FromDays(1)).Date;
+                    targetDateIsToday = false;
+                    CalculateScheduleTargetValues();
+                    EvaluateJobForScheduling(job);
+                }
             }
             catch
             { }
@@ -130,6 +132,26 @@ namespace JobFac.Services.Scheduling
 
             logger.LogInformation($"Created {newSchedules.Count} new schedule targets");
             newSchedules = null;
+        }
+
+        private async Task<bool> WasLastRunToday()
+        {
+            today = SystemClock.Instance.GetCurrentInstant();
+            todayUtc = today.InUtc();
+
+            Instant lastRun = Instant.MinValue;
+            try
+            {
+                // ConfigCache updates every 5 minutes (see JobFac.Library.ConstTimeouts)
+                // so it will always be up-to-date since ScheduleWriter is invoked on a
+                // 15-minute cycle (also defined in ConstTimeouts).
+                var lastRunTimestamp = await configCache.GetValue(ConstConfigKeys.ScheduleWriterLastRunDateUtc);
+                lastRun = InstantPattern.General.Parse(lastRunTimestamp).GetValueOrThrow();
+            }
+            catch
+            { }
+
+            return (todayUtc.Date == lastRun.InUtc().Date);
         }
 
         // Date-based information about the schedule target; used to determine
