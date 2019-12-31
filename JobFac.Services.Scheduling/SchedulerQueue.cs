@@ -2,11 +2,18 @@
 using JobFac.Library.Database;
 using JobFac.Library.DataModels;
 using Microsoft.Extensions.Logging;
+using NodaTime;
 using Orleans;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+
+//
+//  IMPORTANT: 
+//  ALL SCHEDULING/TIMING USES THE NODA TIME LIBRARY.
+//  NODA TIME "INSTANT" IS ONLY CONVERTED TO UTC DATETIMEOFFSET FOR SQL STORAGE.
+//
 
 namespace JobFac.Services.Scheduling
 {
@@ -29,8 +36,8 @@ namespace JobFac.Services.Scheduling
             scheduleWriter = GrainFactory.GetGrain<IScheduleWriter>();
         }
 
-        // The count determines how many jobs are assigned to each call to GetAssignedJobs.
-        private Dictionary<string, DateTimeOffset> knownServices = new Dictionary<string, DateTimeOffset>();
+        // Tracks when a given SchedulerService was last seen; count determines how many jobs are assigned by GetAssignedJobs.
+        private Dictionary<string, Instant> knownServices = new Dictionary<string, Instant>();
         
         // Only evict expired services once per minute
         private int lastServiceEvictionMinute = -1;
@@ -57,7 +64,7 @@ namespace JobFac.Services.Scheduling
         public Task SchedulerServiceStarting(string schedulerServiceId)
         {
             logger.LogInformation($"SchedulerServiceStarting: {schedulerServiceId}");
-            knownServices.AddOrUpdate(schedulerServiceId, DateTimeOffset.Now);
+            knownServices.AddOrUpdate(schedulerServiceId, SystemClock.Instance.GetCurrentInstant());
             return Task.CompletedTask;
         }
 
@@ -71,20 +78,22 @@ namespace JobFac.Services.Scheduling
         public async Task<IReadOnlyList<PendingScheduledJob>> GetJobAssignments(string schedulerServiceId)
         {
             logger.LogInformation($"GetJobAssignments: {schedulerServiceId}");
-            knownServices.AddOrUpdate(schedulerServiceId, DateTimeOffset.Now);
+
+            var now = SystemClock.Instance.GetCurrentInstant();
+            var nowUtc = now.InUtc();
+
+            knownServices.AddOrUpdate(schedulerServiceId, now);
             EvictDeadServices();
 
-            var current = DateTimeOffset.Now.Minute;
+            var currentMinute = nowUtc.Minute;
 
-            if (current % ConstTimeouts.TryInvokeScheduleWriterMinutes == 0)
+            if (currentMinute % ConstTimeouts.TryInvokeScheduleWriterMinutes == 0)
                 RunScheduleWriter();
 
-            if (queuedJobs.Count == 0 || current != jobsQueuedForMinute)
+            if (queuedJobs.Count == 0 || currentMinute != jobsQueuedForMinute)
             {
-                if (current == jobsQueuedForMinute) return queuedJobs; // empty queue
-                jobsQueuedForMinute = current;
-                var thisMinute = Formatting.ScheduleTargetTimestamp(DateTimeOffset.Now);
-                queuedJobs = await scheduleRepository.GetPendingJobs(thisMinute);
+                if (currentMinute == jobsQueuedForMinute) return queuedJobs; // empty queue
+                queuedJobs = await scheduleRepository.GetPendingJobs(nowUtc.ToDateTimeOffset());
                 if (queuedJobs.Count == 0) return queuedJobs; // still an empty queue
             }
 
@@ -97,11 +106,14 @@ namespace JobFac.Services.Scheduling
 
         private void EvictDeadServices()
         {
-            var current = DateTimeOffset.Now.Minute;
-            if (current == lastServiceEvictionMinute) return;
-            lastServiceEvictionMinute = current;
+            var now = SystemClock.Instance.GetCurrentInstant();
+            var nowUtc = now.InUtc();
 
-            var threshold = DateTimeOffset.Now.AddMinutes(-5);
+            var currentMinute = nowUtc.Minute;
+            if (currentMinute == lastServiceEvictionMinute) return;
+            lastServiceEvictionMinute = currentMinute;
+
+            var threshold = now.Plus(Duration.FromMinutes(-5));
             var expired = knownServices.Where(kvp => kvp.Value <= threshold).ToList();
             foreach (var kvp in expired) knownServices.Remove(kvp.Key);
         }

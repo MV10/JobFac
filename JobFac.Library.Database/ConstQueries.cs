@@ -47,7 +47,9 @@ namespace JobFac.Library.Database
 
         public static readonly string SelectPendingScheduledJobs = "SELECT * FROM ScheduledJobs WHERE Activation = '' AND ScheduleTarget <= @ScheduleTarget;";
 
-        public static readonly string SelectJobsWithScheduleSettings = "SELECT Id, ScheduleDateMode, ScheduleDates, ScheduleTimeMode, ScheduleTimes, ScheduleDateTimeKind FROM JobDefinition WHERE ScheduleDateMode > 0;";
+        public static readonly string SelectAllJobScheduleSettings = "SELECT Id, ScheduleDateMode, ScheduleDates, ScheduleTimeMode, ScheduleTimes, ScheduleTimeZone FROM JobDefinition WHERE ScheduleDateMode > 0;";
+
+        public static readonly string SelectJobScheduleSettings = "SELECT Id, ScheduleDateMode, ScheduleDates, ScheduleTimeMode, ScheduleTimes, ScheduleTimeZone FROM JobDefinition WHERE Id = @DefinitionId;";
 
         public static readonly string DeletePendingScheduledJobs = "DELETE FROM ScheduledJobs WHERE Activation = '' AND DefinitionId = @DefinitionId";
 

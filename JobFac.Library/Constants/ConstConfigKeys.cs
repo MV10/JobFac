@@ -13,8 +13,8 @@ namespace JobFac.Library
 
         // DATABASE CONFIG-TABLE KEYS /////////////////////////////////////////////////////////////
 
-        public static readonly string ScheduleWriterLastRunDate = "ScheduleWriterLastRunDate";
-        public static readonly string ScheduleWriterRunTarget = "ScheduleWriterRunTarget";
+        public static readonly string ScheduleWriterLastRunDateUtc = "ScheduleWriterLastRunDateUtc";
+        public static readonly string ScheduleWriterRunTargetUtc = "ScheduleWriterRunTargetUtc";
         public static readonly string SchedulerQueueMaxJobAssignment = "SchedulerQueueMaxJobAssignment";
     }
 }

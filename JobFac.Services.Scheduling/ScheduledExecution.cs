@@ -6,6 +6,12 @@ using Orleans;
 using System;
 using System.Threading.Tasks;
 
+//
+//  IMPORTANT: 
+//  ALL SCHEDULING/TIMING USES THE NODA TIME LIBRARY.
+//  NODA TIME "INSTANT" IS ONLY CONVERTED TO UTC DATETIMEOFFSET FOR SQL STORAGE.
+//
+
 namespace JobFac.Services.Scheduling
 {
     public class ScheduledExecution : Grain, IScheduledExecution

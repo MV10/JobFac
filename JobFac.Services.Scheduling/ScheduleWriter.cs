@@ -2,15 +2,23 @@
 using JobFac.Library.Database;
 using JobFac.Library.DataModels;
 using Microsoft.Extensions.Logging;
+using NodaTime;
+using NodaTime.Text;
 using Orleans;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-// TODO ensure scheduler system uses UTC everywhere
-// TODO consider local-to-UTC "tomorrow" issue in SchedulerQueue's call to ScheduleWriter
-// TODO handle local-to-UTC conversions in ScheduleWriter
+//
+//  IMPORTANT: 
+//  ALL SCHEDULING/TIMING USES THE NODA TIME LIBRARY.
+//  NODA TIME "INSTANT" IS ONLY CONVERTED TO UTC DATETIMEOFFSET FOR SQL STORAGE.
+//
+//  This class can interpret user-input as relating to a given time zone (see
+//  list here: https://nodatime.org/TimeZones). They will be resolved to a
+//  a Noda Time Instant then converted to a UTC DateTimeOffset for storage.
+//
 
 namespace JobFac.Services.Scheduling
 {
@@ -34,13 +42,101 @@ namespace JobFac.Services.Scheduling
             configCache = cache;
         }
 
-        private int today;
+        private Instant today;
+        private ZonedDateTime todayUtc;
         private List<ScheduledJobsTable> newSchedules;
+        DateTimeZone utcTimeZone = DateTimeZoneProviders.Tzdb["Etc/UTC"];
+
+        public async Task WriteNewScheduleTargets()
+        {
+            today = SystemClock.Instance.GetCurrentInstant();
+            todayUtc = today.InUtc();
+
+            // Decision about whether the once-daily run target is near enough:
+
+            Instant lastRun = Instant.MinValue;
+            try
+            {
+                // ConfigCache updates every 5 minutes (see JobFac.Library.ConstTimeouts)
+                // so it will always be up-to-date since ScheduleWriter is invoked on a
+                // 15-minute cycle (also defined in ConstTimeouts).
+                var lastRunTimestamp = await configCache.GetValue(ConstConfigKeys.ScheduleWriterLastRunDateUtc);
+                lastRun = InstantPattern.General.Parse(lastRunTimestamp).GetValueOrThrow();
+            }
+            catch
+            { }
+            if (todayUtc.Date == lastRun.InUtc().Date) return;
+
+            // This will be an HHmm value such as 1030 or 2200; SchedulerQueue only invokes this
+            // grain at 15-minute intervals, so quit unless we're near or past the run-at time.
+            var paddedUtc = todayUtc.PlusMinutes(5);
+            var paddedTime = paddedUtc.TimeOfDay;
+            var runTargetUtc = await configCache.GetValue(ConstConfigKeys.ScheduleWriterRunTargetUtc);
+            var (runHour, runMinute) = GetHourMinute(runTargetUtc);
+            if (paddedUtc.Date == todayUtc.Date && (paddedTime.Hour < runHour || (paddedTime.Hour == runHour && paddedTime.Minute < runMinute))) return;
+
+            // Decision made: yes, write the next day's schedule records.
+            logger.LogInformation($"WriteNewScheduleTargets");
+
+            var jobs = await scheduleRepository.GetJobsWithScheduleSettings();
+            if (jobs.Count == 0) return;
+
+            newSchedules = new List<ScheduledJobsTable>();
+            foreach (var job in jobs)
+            {
+                try
+                {
+                    var jobDataTimeZone = DateTimeZoneProviders.Tzdb[job.ScheduleTimeZone];
+                    targetDate = today.InZone(jobDataTimeZone).Plus(Duration.FromDays(1)).Date;
+                    targetDateIsToday = true;
+                    CalculateScheduleTargetValues();
+                    EvaluateJobForScheduling(job);
+                }
+                catch
+                { }
+            }
+
+            if (newSchedules.Count > 0)
+                await InsertScheduleRows();
+
+            logger.LogInformation($"Created {newSchedules.Count} new schedule targets");
+            newSchedules = null;
+
+            await configRepository.UpdateConfig(ConstConfigKeys.ScheduleWriterLastRunDateUtc, InstantPattern.General.Format(today));
+        }
+
+        public async Task UpdateJobSchedules(string jobDefinitionId, bool removeExistingRows = true)
+        {
+            logger.LogInformation($"UpdateJobSchedules for job {jobDefinitionId}");
+
+            if (removeExistingRows)
+                await scheduleRepository.DeletePendingScheduledJobs(jobDefinitionId);
+
+            newSchedules = new List<ScheduledJobsTable>();
+            try
+            {
+                var job = await scheduleRepository.GetJobScheduleSettings(jobDefinitionId);
+                var jobDataTimeZone = DateTimeZoneProviders.Tzdb[job.ScheduleTimeZone];
+                targetDate = today.InZone(jobDataTimeZone).Date;
+                targetDateIsToday = false;
+                CalculateScheduleTargetValues();
+                EvaluateJobForScheduling(job);
+            }
+            catch
+            { }
+
+            if (newSchedules.Count > 0)
+                await InsertScheduleRows();
+
+            logger.LogInformation($"Created {newSchedules.Count} new schedule targets");
+            newSchedules = null;
+        }
 
         // Date-based information about the schedule target; used to determine
         // whether the job should be scheduled for the date in question. Set
         // targetDate, then call CalculateScheduleTargetValues to set the rest.
-        private DateTimeOffset targetDate;
+        private LocalDate targetDate; // adjusted to ScheduleTimeZone in JobDefinition
+        private bool targetDateIsToday;
         private int targetMonth;
         private int targetDay;
         private int targetLastDayOfMonth;
@@ -52,103 +148,171 @@ namespace JobFac.Services.Scheduling
         private bool targetIsFirstWeekdayOfMonth;
         private bool targetIsLastWeekdayOfMonth;
 
-        public async Task WriteNewScheduleTargets()
+        // Set the targetDate field before calling this.
+        private void CalculateScheduleTargetValues()
         {
-            if (!await ShouldExecute()) return;
-            logger.LogInformation($"WriteNewScheduleTargets");
-            await WriteSchedulesForTomorrow();
-            await configRepository.UpdateConfig(ConstConfigKeys.ScheduleWriterLastRunDate, today.ToString());
+            targetLastDayOfMonth = targetDate.With(DateAdjusters.EndOfMonth).Day;
+            targetMonth = targetDate.Month;
+            targetDay = targetDate.Day;
+            targetDayOfWeek = ((int)targetDate.DayOfWeek).ToString();
+            targetDayOfMonth = targetDay.ToString();
+            targetMonthAndDay = $"{targetDate:MM/dd}";
+            targetIsFirstDayOfMonth = targetDay == 1;
+            targetIsLastDayOfMonth = targetDay == targetLastDayOfMonth;
+
+            targetIsFirstWeekdayOfMonth = targetDay == FirstWeekdayOfMonth();
+            targetIsLastWeekdayOfMonth = targetDay == LastWeekdayOfMonth();
         }
 
-        public async Task UpdateJobSchedules(string jobDefinitionId, bool removeExistingRows = true)
+        private int FirstWeekdayOfMonth()
         {
-            logger.LogInformation($"UpdateJobSchedules for job {jobDefinitionId}");
-
-            if (removeExistingRows)
-                await scheduleRepository.DeletePendingScheduledJobs(jobDefinitionId);
-
-            // TODO complete UpdateJobSchedules
-            throw new NotImplementedException();
+            var result = targetDate.With(DateAdjusters.StartOfMonth);
+            while (result.DayOfWeek == IsoDayOfWeek.Saturday || result.DayOfWeek == IsoDayOfWeek.Sunday)
+                result.PlusDays(1);
+            return result.Day;
         }
 
-        private async Task<bool> ShouldExecute()
+        private int LastWeekdayOfMonth()
         {
-            // ConfigCache updates every 5 minutes (see JobFac.Library.ConstTimeouts)
-            // so it will always be up-to-date since ScheduleWriter is invoked on a
-            // 15-minute cycle (also defined in ConstTimeouts).
-
-            // This will be a date-only yyyyMMdd value such as 20191225
-            int lastRun = int.Parse(await configCache.GetValue(ConstConfigKeys.ScheduleWriterLastRunDate));
-            today = int.Parse(DateTimeOffset.UtcNow.ToString("yyyyMMdd"));
-            if (today == lastRun) return false;
-
-            // This will be an HHmm value such as 1030 or 2200; SchedulerQueue only invokes this
-            // method at 15-minute intervals, so quit unless we're close to the runAt time (or past it).
-            int runAt = int.Parse(await configCache.GetValue(ConstConfigKeys.ScheduleWriterRunTarget));
-            int now = int.Parse(DateTimeOffset.UtcNow.AddMinutes(5).ToString("HHmm"));
-            if (now < runAt) return false;
-
-            return true;
+            var result = targetDate.With(DateAdjusters.EndOfMonth);
+            while (result.DayOfWeek == IsoDayOfWeek.Saturday || result.DayOfWeek == IsoDayOfWeek.Sunday)
+                result.PlusDays(-1);
+            return result.Day;
         }
 
-        private async Task WriteSchedulesForTomorrow()
+        private void EvaluateJobForScheduling(JobsWithSchedulesQuery job)
         {
-            var jobs = await scheduleRepository.GetJobsWithScheduleSettings();
-            if (jobs.Count == 0) return;
+            // It's safe to assume the data returned by the query is always valid. The
+            // query excludes any ScheduleDateMode.Unscheduled records, and the validator
+            // for BaseDefinition ensures all of the settings and combinations are correct.
+            var dates = job.ScheduleDates.Split(",", StringSplitOptions.RemoveEmptyEntries).ToList();
 
-            targetDate = DateTimeOffset.UtcNow.Date.AddDays(1);
-            CalculateScheduleTargetValues();
-
-            newSchedules = new List<ScheduledJobsTable>();
-            foreach(var job in jobs)
+            switch (job.ScheduleDateMode)
             {
-                // It's safe to assume the data returned by the query is always valid. The
-                // query excludes any ScheduleDateMode.Unscheduled records, and the validator
-                // for BaseDefinition ensures all of the settings and combinations are correct.
-                var dates = job.ScheduleDates.Split(",", StringSplitOptions.RemoveEmptyEntries).ToList();
+                // any of 1-7 with commas, ISO format (Monday = 1, Sunday = 7)
+                case ScheduleDateMode.DaysOfWeek:
+                    if (dates.Any(d => d.Equals(targetDayOfWeek))) CreateSchedulesForDate(job);
+                    break;
 
-                switch(job.ScheduleDateMode)
-                {
-                    // any of 0-6 with commas
-                    case ScheduleDateMode.DaysOfWeek:
-                        if (dates.Any(d => d.Equals(targetDayOfWeek))) CreateSchedulesForJob(job);
-                        break;
+                // any numeric with commas, or first,last
+                case ScheduleDateMode.DaysOfMonth:
+                    if (dates.Any(d => d.Equals(targetDayOfMonth))
+                        || (targetIsFirstDayOfMonth && dates.Any(d => d.Equals("first", StringComparison.OrdinalIgnoreCase)))
+                        || (targetIsLastDayOfMonth && dates.Any(d => d.Equals("last", StringComparison.OrdinalIgnoreCase))))
+                        CreateSchedulesForDate(job);
+                    break;
 
-                    // any numeric with commas, or first,last
-                    case ScheduleDateMode.DaysOfMonth:
-                        if (dates.Any(d => d.Equals(targetDayOfMonth))
-                            || (targetIsFirstDayOfMonth && dates.Any(d => d.Equals("first", StringComparison.OrdinalIgnoreCase)))
-                            || (targetIsLastDayOfMonth && dates.Any(d => d.Equals("last", StringComparison.OrdinalIgnoreCase))))
-                            CreateSchedulesForJob(job);
-                        break;
+                // mm/dd,mm/dd,mm/dd
+                case ScheduleDateMode.SpecificDates:
+                    if (dates.Any(d => d.Equals(targetMonthAndDay))) CreateSchedulesForDate(job);
+                    break;
 
-                    // mm/dd,mm/dd,mm/dd
-                    case ScheduleDateMode.SpecificDates:
-                        if (dates.Any(d => d.Equals(targetMonthAndDay))) CreateSchedulesForJob(job);
-                        break;
+                // mm/dd-mm/dd,mm/dd-mm/dd (inclusive)
+                case ScheduleDateMode.DateRanges:
+                    if (dates.Any(d => InDateRange(d))) CreateSchedulesForDate(job);
+                    break;
 
-                    // mm/dd-mm/dd,mm/dd-mm/dd (inclusive)
-                    case ScheduleDateMode.DateRanges:
-                        if(dates.Any(d => InDateRange(d))) CreateSchedulesForJob(job);
-                        break;
-
-                    // first,last
-                    case ScheduleDateMode.WeekdaysOfMonth:
-                        if ((targetIsFirstWeekdayOfMonth && dates.Any(d => d.Equals("first", StringComparison.OrdinalIgnoreCase)))
-                            || (targetIsLastWeekdayOfMonth && dates.Any(d => d.Equals("last", StringComparison.OrdinalIgnoreCase))))
-                            CreateSchedulesForJob(job);
-                        break;
-                }
+                // first,last
+                case ScheduleDateMode.WeekdaysOfMonth:
+                    if ((targetIsFirstWeekdayOfMonth && dates.Any(d => d.Equals("first", StringComparison.OrdinalIgnoreCase)))
+                        || (targetIsLastWeekdayOfMonth && dates.Any(d => d.Equals("last", StringComparison.OrdinalIgnoreCase))))
+                        CreateSchedulesForDate(job);
+                    break;
             }
-
-            if (newSchedules.Count > 0) 
-                await WriteScheduleRows();
-
-            logger.LogInformation($"Created {newSchedules.Count} new schedule targets");
-            newSchedules = null;
         }
 
-        private async Task WriteScheduleRows()
+        private void CreateSchedulesForDate(JobsWithSchedulesQuery job)
+        {
+            // When the schedules are being created for the current date, don't
+            // create new schedules targeting times which have already passed.
+            var filterHour = todayUtc.Hour;
+            var filterMinute = todayUtc.Minute;
+
+            var jobDataTimeZone = DateTimeZoneProviders.Tzdb[job.ScheduleTimeZone];
+
+            var times = job.ScheduleTimes.Split(",", StringSplitOptions.RemoveEmptyEntries).ToList();
+
+            switch (job.ScheduleTimeMode)
+            {
+                // every hour at the indicated minutes (eg. 00,15,30,45)
+                case ScheduleTimeMode.Minutes:
+                    for(int hour = 0; hour < 24; hour++)
+                    {
+                        foreach(var min in times)
+                        {
+                            var minute = int.Parse(min);
+                            var target = TargetTimeUtc(hour, minute, jobDataTimeZone);
+                            if(!targetDateIsToday || filterHour < hour || (filterHour == hour && filterMinute <= minute))
+                                AddScheduleEntry(job.Id, target);
+                        }
+                    }
+                    break;
+
+                // specific times: 1130,1400,2245
+                case ScheduleTimeMode.HoursMinutes:
+                    foreach(var time in times)
+                    {
+                        var (hour, minute) = GetHourMinute(time);
+                        var target = TargetTimeUtc(hour, minute, jobDataTimeZone);
+                        if (!targetDateIsToday || filterHour < hour || (filterHour == hour && filterMinute <= minute))
+                            AddScheduleEntry(job.Id, target);
+                    }
+                    break;
+
+                // a single value, every N minutes starting after midnight (eg. 30)
+                case ScheduleTimeMode.Interval:
+                    for (int hour = 0; hour < 24; hour++)
+                    {
+                        int interval = int.Parse(times[0]);
+                        for(int minute = 0; minute < 59; minute += interval)
+                        {
+                            var target = TargetTimeUtc(hour, minute, jobDataTimeZone);
+                            if (!targetDateIsToday || filterHour < hour || (filterHour == hour && filterMinute <= minute))
+                                AddScheduleEntry(job.Id, target);
+                        }
+                    }
+                    break;
+            }
+        }
+
+        private DateTimeOffset TargetTimeUtc(int hour, int minute, DateTimeZone zone)
+        {
+            return new LocalDateTime(targetDate.Year, targetDay, targetMonth, hour, minute)
+                    .InZoneLeniently(zone)
+                    .WithZone(utcTimeZone)
+                    .ToDateTimeOffset();
+        }
+
+        // For ScheduleDateMode.DateRanges the ScheduleDates values should be date ranges in the
+        // format mm/dd-mm/dd (exactly that format); this determines if targetDate is in that
+        // range (inclusive of the start/end dates for the range).
+        private bool InDateRange(string range)
+        {
+            var m1 = int.Parse(range.Substring(0, 2));
+            var d1 = int.Parse(range.Substring(3, 2));
+            var m2 = int.Parse(range.Substring(6, 2));
+            var d2 = int.Parse(range.Substring(9, 2));
+            return ((targetMonth > m1 || (targetMonth == m1 && targetDay >= d1)) && (targetMonth < m2 || (targetMonth == m2 && targetDay <= d2)));
+        }
+
+        private (int, int) GetHourMinute(string HHmm)
+        {
+            int n = HHmm.Length - 2;
+            int hour = int.Parse(HHmm.Substring(0, n));
+            int minute = int.Parse(HHmm.Substring(n, 2));
+            return (hour, minute);
+        }
+
+        private void AddScheduleEntry(string jobDefinitionId, DateTimeOffset scheduleTarget)
+        {
+            newSchedules.Add(new ScheduledJobsTable
+            {
+                DefinitionId = jobDefinitionId,
+                ScheduleTarget = scheduleTarget
+            });
+        }
+
+        private async Task InsertScheduleRows()
         {
             // The use of string.Format is not a SQL injection risk since the input values
             // are not from external sources (the application supplies the input values and
@@ -167,103 +331,5 @@ namespace JobFac.Services.Scheduling
             await scheduleRepository.BulkInsertScheduledJobs(sqlBatches);
         }
 
-        // afterCurrentTime is used when updating a specific job's schedule when targetDate is set to today's
-        // date (which happens when schedules for tomorrow haven't been written yet)
-        private void CreateSchedulesForJob(JobsWithSchedulesQuery job, bool afterCurrentTime = false)
-        {
-            var times = job.ScheduleTimes.Split(",", StringSplitOptions.RemoveEmptyEntries).ToList();
-
-            switch(job.ScheduleTimeMode)
-            {
-                // every hour at the indicated minutes (eg. 00,15,30,45)
-                case ScheduleTimeMode.Minutes:
-                    for(int hour = 0; hour < 24; hour++)
-                    {
-                        foreach(var minute in times)
-                        {
-                            var target = new DateTimeOffset(targetDate.Year, targetDay, targetMonth, hour, int.Parse(minute), 0, TimeSpan.Zero);
-                            CreateScheduleEntry(target, job.Id);
-                        }
-                    }
-                    break;
-
-                // specific times: 1130,1400,2245
-                case ScheduleTimeMode.HoursMinutes:
-                    foreach(var time in times)
-                    {
-                        int n = time.Length - 2;
-                        int hour = int.Parse(time.Substring(0, n));
-                        int minute = int.Parse(time.Substring(n, 2));
-                        var target = new DateTimeOffset(targetDate.Year, targetDay, targetMonth, hour, minute, 0, TimeSpan.Zero);
-                        CreateScheduleEntry(target, job.Id);
-                    }
-                    break;
-
-                // a single value, every N minutes starting after midnight (eg. 30)
-                case ScheduleTimeMode.Interval:
-                    for (int hour = 0; hour < 24; hour++)
-                    {
-                        int interval = int.Parse(times[0]);
-                        for(int minute = 0; minute < 59; minute += interval)
-                        {
-                            var target = new DateTimeOffset(targetDate.Year, targetDay, targetMonth, hour, minute, 0, TimeSpan.Zero);
-                            CreateScheduleEntry(target, job.Id);
-                        }
-                    }
-                    break;
-            }
-        }
-
-        // Set the targetDate field before calling this.
-        private void CalculateScheduleTargetValues()
-        {
-            targetLastDayOfMonth = (targetDate.AddMonths(1).AddDays(-1).Day);
-            targetMonth = targetDate.Month;
-            targetDay = targetDate.Day;
-            targetDayOfWeek = ((int)targetDate.DayOfWeek).ToString();
-            targetDayOfMonth = targetDay.ToString();
-            targetMonthAndDay = targetDate.ToString("MM/dd");
-            targetIsFirstDayOfMonth = targetDay == 1;
-            targetIsLastDayOfMonth = targetDay == targetLastDayOfMonth;
-            targetIsFirstWeekdayOfMonth = targetDay == FirstWeekdayOfMonth();
-            targetIsLastWeekdayOfMonth = targetDay == LastWeekdayOfMonth();
-        }
-
-        private int FirstWeekdayOfMonth()
-        {
-            var result = new DateTimeOffset(targetDate.Year, targetDate.Month, 1, 0, 0, 0, TimeSpan.Zero);
-            while (result.DayOfWeek == DayOfWeek.Saturday || result.DayOfWeek == DayOfWeek.Sunday)
-                result.AddDays(1);
-            return result.Day;
-        }
-
-        private int LastWeekdayOfMonth()
-        {
-            var result = new DateTimeOffset(targetDate.Year, targetDate.Month, targetLastDayOfMonth, 0, 0, 0, TimeSpan.Zero);
-            while (result.DayOfWeek == DayOfWeek.Saturday || result.DayOfWeek == DayOfWeek.Sunday)
-                result.AddDays(-1);
-            return result.Day;
-        }
-
-        // For ScheduleDateMode.DateRanges the ScheduleDates values should be date ranges in the
-        // format mm/dd-mm/dd (exactly that format); this determines if targetDate is in that
-        // range (inclusive of the start/end dates for the range).
-        private bool InDateRange(string range)
-        {
-            var m1 = int.Parse(range.Substring(0, 2));
-            var d1 = int.Parse(range.Substring(3, 2));
-            var m2 = int.Parse(range.Substring(6, 2));
-            var d2 = int.Parse(range.Substring(9, 2));
-            return ((targetMonth > m1 || (targetMonth == m1 && targetDay >= d1)) && (targetMonth < m2 || (targetMonth == m2 && targetDay <= d2)));
-        }
-
-        private void CreateScheduleEntry(DateTimeOffset scheduleTarget, string jobDefinitionId)
-        {
-            newSchedules.Add(new ScheduledJobsTable
-            {
-                DefinitionId = jobDefinitionId,
-                ScheduleTarget = Formatting.ScheduleTargetTimestamp(scheduleTarget)
-            });
-        }
     }
 }

@@ -5,14 +5,14 @@ INSERT INTO [dbo].[JobDefinition]
 ([Id], 
 [JobType], [Category], [Name], [Description], [IsStartDisabled], [StartOnDemand], [StartBySchedule], 
 [AlreadyRunningAction], [AlreadyRunningNotificationTargetType], [AlreadyRunningNotificationTarget],
-[ScheduleDateMode], [ScheduleTimeMode], [ScheduleDates], [ScheduleTimes], [ScheduleDateTimeKind],
+[ScheduleDateMode], [ScheduleTimeMode], [ScheduleDates], [ScheduleTimes], [ScheduleTimeZone],
 [ExecutionNotificationTargetType], [SuccessNotificationTargetType], [FailureNotificationTargetType], 
 [ExecutionNotificationTarget], [SuccessNotificationTarget], [FailureNotificationTarget]) 
 VALUES 
 (N'Sample.JobFac.unaware', 
 1, N'', N'Sample.JobFac.unaware', N'A console program that can''t retrieve payloads from the Job service.', 0, 1, 1, 
 0, 0, N'',
-0, 0, N'', N'', 2,
+0, 0, N'', N'', N'America/New_York',
 0, 0, 0, N'', N'', N'')
 GO
 
@@ -42,14 +42,14 @@ INSERT INTO [dbo].[JobDefinition]
 ([Id], 
 [JobType], [Category], [Name], [Description], [IsStartDisabled], [StartOnDemand], [StartBySchedule], 
 [AlreadyRunningAction], [AlreadyRunningNotificationTargetType], [AlreadyRunningNotificationTarget],
-[ScheduleDateMode], [ScheduleTimeMode], [ScheduleDates], [ScheduleTimes], [ScheduleDateTimeKind],
+[ScheduleDateMode], [ScheduleTimeMode], [ScheduleDates], [ScheduleTimes], [ScheduleTimeZone],
 [ExecutionNotificationTargetType], [SuccessNotificationTargetType], [FailureNotificationTargetType], 
 [ExecutionNotificationTarget], [SuccessNotificationTarget], [FailureNotificationTarget]) 
 VALUES 
 (N'Sample.JobFac.aware', 
 1, N'', N'Sample.JobFac.aware', N'A console program that can communicate with JobFac and requires a startup payload.', 0, 1, 1, 
 0, 0, N'',
-0, 0, N'', N'', 2,
+0, 0, N'', N'', N'America/New_York',
 0, 0, 0, N'', N'', N'')
 GO
 

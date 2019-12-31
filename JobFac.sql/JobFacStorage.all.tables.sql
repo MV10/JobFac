@@ -28,7 +28,7 @@ CREATE TABLE [dbo].[JobDefinition]
     [ScheduleTimeMode] INT NOT NULL, 
     [ScheduleDates] NVARCHAR(128) NOT NULL, 
     [ScheduleTimes] NVARCHAR(128) NOT NULL, 
-    [ScheduleDateTimeKind] INT NOT NULL,
+    [ScheduleTimeZone] NVARCHAR(64) NOT NULL,
     [ExecutionNotificationTargetType] INT NOT NULL, 
     [SuccessNotificationTargetType] INT NOT NULL, 
     [FailureNotificationTargetType] INT NOT NULL, 
@@ -148,7 +148,7 @@ GO
 CREATE TABLE [dbo].[ScheduledJobs]
 (
 	[DefinitionId] NVARCHAR(128) NOT NULL, 
-    [ScheduleTarget] BIGINT NOT NULL, -- yyyyMMddHHmm
+    [ScheduleTarget] DATETIMEOFFSET NOT NULL, -- Noda Time instant converted to UTC
     [Activation] NVARCHAR(64) NOT NULL
 )
 GO
@@ -176,7 +176,7 @@ GO
 
 TRUNCATE TABLE [dbo].[Config];
 INSERT INTO [dbo].[Config] ([ConfigKey], [ConfigValue]) VALUES
-('ScheduleWriterLastRunDate', '20011031'),      -- random early value (Halloween 2001!)
-('ScheduleWriterRunTarget', '2230'),            -- 10:30 PM daily
-('SchedulerQueueMaxJobAssignment', '10')        -- each SchedulerService is assigned no more than 20 per request
+('ScheduleWriterLastRunDateUtc', '2001-10-31T00:00:00Z'),   -- random early value (Halloween 2001!)
+('ScheduleWriterRunTargetUtc', '2230'),                     -- 10:30 PM daily, DO NOT set to 2345 or later
+('SchedulerQueueMaxJobAssignment', '10')                    -- each SchedulerService is assigned no more than 20 per request
 GO

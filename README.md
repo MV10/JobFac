@@ -25,11 +25,13 @@ The goal is to keep this fully open sourced and free to use, along the same line
 * Microsoft Orleans 3.0
 * Dapper 2.0
 * SQL Server 2016+
+* Noda Time 2.4
 
 ## Progress Notes
 
 2020-dec-31
-* schedule system complete (with some Local/UTC decision/issues remaining)
+* scheduling system complete
+* refactored all date/time handling to Noda Time (avoid DST/timezone issues etc.)
 
 2020-dec-30
 * scheduled execution features partly completed

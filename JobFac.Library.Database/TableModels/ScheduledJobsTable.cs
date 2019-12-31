@@ -1,9 +1,11 @@
-﻿namespace JobFac.Library.Database
+﻿using System;
+
+namespace JobFac.Library.Database
 {
     public class ScheduledJobsTable
     {
         public string DefinitionId { get; set; } = string.Empty;
-        public long ScheduleTarget { get; set; } = 0; // yyyyMMddHHmm ... noon on xmas 2020: 202012251200 (but UTC)
+        public DateTimeOffset ScheduleTarget { get; set; } = 0; // stored as UTC, convert to Noda Time Instant
         public string Activation { get; set; } = string.Empty;
     }
 }
