@@ -4,8 +4,7 @@ using System.Threading.Tasks;
 
 namespace JobFac.Services
 {
-    // StatelessWorker grain
-    public interface IDataUtilities : IGrainWithIntegerKey
+    public interface IDataUtilities : IStatelessWorkerGrain
     {
         Task WriteCapturedOutput(string instanceKey, string stdOut, string stdErr);
         Task RemoteLogger(string message);

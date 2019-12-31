@@ -4,12 +4,13 @@ using Orleans;
 using Orleans.Core;
 using Orleans.Runtime;
 using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace JobFac.Services.Scheduling
 {
-    // TODO can SchedulerService be safely marked reentrant with timers firing?
+    // Typically it's recommended to mark a GrainService as [Reentrant]
+    // if possible, but this only makes outbound calls (to SchedulerQueue).
+
     public class SchedulerService : GrainService, ISchedulerService
     {
         private readonly string grainId;
@@ -29,6 +30,7 @@ namespace JobFac.Services.Scheduling
         }
 
         private ISchedulerQueue schedulerQueue;
+        private IDisposable timerHandle = null;
 
         public override async Task Init(IServiceProvider serviceProvider)
         {
@@ -41,14 +43,50 @@ namespace JobFac.Services.Scheduling
         {
             logger.LogInformation($"Start");
             await schedulerQueue.SchedulerServiceStarting(grainId);
+            timerHandle = RegisterTimer(async (_) => { await RequestNewWork(); }, null, TimeSpan.FromMilliseconds(500), TimeSpan.FromMinutes(1));
             await base.Start();
         }
 
         public override async Task Stop()
         {
+            timerHandle?.Dispose();
+            timerHandle = null;
             logger.LogInformation($"Stop");
             await schedulerQueue.SchedulerServiceStopping(grainId);
             await base.Stop();
+        }
+
+        public async Task RequestNewWork()
+        {
+            timerHandle?.Dispose();
+            timerHandle = null;
+
+            while (timerHandle == null)
+            {
+                var assignedJobs = await schedulerQueue.GetJobAssignments(grainId);
+                if (assignedJobs.Count == 0)
+                {
+                    IdleUntilNextMinute();
+                }
+                else
+                {
+                    logger.LogInformation($"Executing {assignedJobs.Count} jobs");
+                    foreach(var job in assignedJobs)
+                    {
+                        var execKey = job.DefinitionId + job.ScheduleTarget.ToString();
+                        var execGrain = client.GetGrain<IScheduledExecution>(execKey);
+                        execGrain.StartScheduledJob(job).Ignore();
+                    }
+                    assignedJobs = null;
+                }
+            }
+        }
+
+        public void IdleUntilNextMinute()
+        {
+            var delay = 1000 - DateTimeOffset.Now.Millisecond;
+            timerHandle = RegisterTimer(async (_) => { await RequestNewWork(); }, null, TimeSpan.FromMilliseconds(delay), TimeSpan.FromMinutes(1));
+            logger.LogInformation($"Delaying {delay} ms");
         }
     }
 }

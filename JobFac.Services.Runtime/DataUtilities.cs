@@ -21,7 +21,7 @@ namespace JobFac.Services.Runtime
             ILoggerFactory loggerFactory,
             HistoryRepository historyRepository)
         {
-            logForRemote = loggerFactory.CreateLogger(ConstLogging.JobFacLoggerProviderName);
+            logForRemote = loggerFactory.CreateLogger(ConstLogging.JobFacRemoteLoggerProviderName);
             historyRepo = historyRepository;
         }
 

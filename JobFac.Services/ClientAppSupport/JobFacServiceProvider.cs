@@ -16,7 +16,7 @@ namespace JobFac.Services
             => clusterClient.GetGrain<IJobExternalProcess>(instanceId);
 
         public IJobFactory GetJobFactory()
-            => clusterClient.GetGrain<IJobFactory>(0);
+            => clusterClient.GetGrain<IJobFactory>();
 
         public async ValueTask DisposeAsync()
         {

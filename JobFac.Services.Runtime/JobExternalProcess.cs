@@ -127,7 +127,7 @@ namespace JobFac.Services.Runtime
 
         public async Task WriteCapturedOutput(string instanceKey, string stdOut, string stdErr)
         {
-            var dataUtil = GrainFactory.GetGrain<IDataUtilities>(0); // StatelessWorker
+            var dataUtil = GrainFactory.GetGrain<IDataUtilities>();
             await dataUtil.WriteCapturedOutput(instanceKey, stdOut, stdErr);
         }
 

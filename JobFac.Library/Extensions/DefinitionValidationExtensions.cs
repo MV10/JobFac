@@ -1,12 +1,37 @@
 ﻿using JobFac.Library.DataModels.Abstractions;
 using System;
 
-// TODO consider validating format for individual options (ex. each ScheduleDateMode vs ScheduleDates content)
-
 namespace JobFac.Library.DataModels
 {
     public static class DefinitionValidationExtensions
     {
+        private static void ThrowIfInvalid(this JobDefinitionBase def)
+        {
+            if (def.ScheduleDateMode != ScheduleDateMode.Unscheduled)
+            {
+                if (def.ScheduleTimeMode == ScheduleTimeMode.Unscheduled)
+                    Throw("setting ScheduleDateMode requires a ScheduleTimeMode and a value in ScheduleTimes field");
+
+                if (!def.ScheduleDates.HasContent() || !def.ScheduleTimes.HasContent())
+                    Throw("setting ScheduleDateMode requires values in ScheduleDates and ScheduleTimes fields");
+
+                if (def.ScheduleDateTimeKind == DateTimeKind.Unspecified)
+                    Throw("setting ScheduleDateMode requires a ScheduleDateTimeKind of Local or Utc");
+
+                // TODO validate ScheduleDateMode vs ScheduleDates content
+                // TODO validate ScheduleTimeMode vs ScheduleTimes content
+            }
+
+            if (def.ExecutionNotificationTargetType != NotificationTargetType.None && !def.ExecutionNotificationTarget.HasContent())
+                Throw("setting ExecutionNotificationTargetType requires a value in ExecutionNotificationTarget field");
+
+            if (def.SuccessNotificationTargetType != NotificationTargetType.None && !def.SuccessNotificationTarget.HasContent())
+                Throw("setting SuccessNotificationTargetType requires a value in SuccessNotificationTarget field");
+
+            if (def.FailureNotificationTargetType != NotificationTargetType.None && !def.FailureNotificationTarget.HasContent())
+                Throw("setting FailureNotificationTargetType requires a value in FailureNotificationTarget field");
+        }
+
         public static void ThrowIfInvalid(this JobDefinition<DefinitionExternalProcess> def)
         {
             ((JobDefinitionBase)def).ThrowIfInvalid();
@@ -42,24 +67,6 @@ namespace JobFac.Library.DataModels
 
             if (props.RetryWhenFailed && props.MaximumRetryCount < 1)
                 Throw("RetryWhenFailed requires MaximumRetryCount of 1 or greater");
-        }
-
-        private static void ThrowIfInvalid(this JobDefinitionBase def)
-        {
-            if (def.ScheduleDateMode != ScheduleDateMode.Unscheduled && !def.ScheduleDates.HasContent())
-                Throw("setting ScheduleDateMode requires a value in ScheduleDates field");
-
-            if (def.ScheduleTimeMode != ScheduleTimeMode.Unscheduled && !def.ScheduleTimes.HasContent())
-                Throw("setting ScheduleTimeMode requires a value in ScheduleTimes field");
-
-            if (def.ExecutionNotificationTargetType != NotificationTargetType.None && !def.ExecutionNotificationTarget.HasContent())
-                Throw("setting ExecutionNotificationTargetType requires a value in ExecutionNotificationTarget field");
-
-            if (def.SuccessNotificationTargetType != NotificationTargetType.None && !def.SuccessNotificationTarget.HasContent())
-                Throw("setting SuccessNotificationTargetType requires a value in SuccessNotificationTarget field");
-
-            if (def.FailureNotificationTargetType != NotificationTargetType.None && !def.FailureNotificationTarget.HasContent())
-                Throw("setting FailureNotificationTargetType requires a value in FailureNotificationTarget field");
         }
 
         public static void ThrowIfInvalid(this StepDefinition def)

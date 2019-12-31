@@ -31,10 +31,10 @@ namespace DevConsoleHost
                     //.AddFilter("Runtime", LogLevel.Warning)     // also an Orleans prefix
 
                     // JobFac Runner currently uses info, error, and trace
-                    //.AddFilter(ConstLogging.JobFacLoggerProviderName, LogLevel.Trace)
-                    
+                    //.AddFilter(ConstLogging.JobFacRemoteLoggerProviderName, LogLevel.Trace)
+
                     // See everything with a JobFac prefix:
-                    .AddFilter("JobFac", LogLevel.Trace)
+                    .AddFilter(ConstLogging.JobFacLogCategoryPrefix, LogLevel.Trace)
 
                     .AddDebug() // VS Debug window
                     .AddConsole();

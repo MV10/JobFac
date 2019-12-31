@@ -5,14 +5,14 @@ INSERT INTO [dbo].[JobDefinition]
 ([Id], 
 [JobType], [Category], [Name], [Description], [IsStartDisabled], [StartOnDemand], [StartBySchedule], 
 [AlreadyRunningAction], [AlreadyRunningNotificationTargetType], [AlreadyRunningNotificationTarget],
-[ScheduleDateMode], [ScheduleTimeMode], [ScheduleDates], [ScheduleTimes], 
+[ScheduleDateMode], [ScheduleTimeMode], [ScheduleDates], [ScheduleTimes], [ScheduleDateTimeKind],
 [ExecutionNotificationTargetType], [SuccessNotificationTargetType], [FailureNotificationTargetType], 
 [ExecutionNotificationTarget], [SuccessNotificationTarget], [FailureNotificationTarget]) 
 VALUES 
 (N'Sample.JobFac.unaware', 
 1, N'', N'Sample.JobFac.unaware', N'A console program that can''t retrieve payloads from the Job service.', 0, 1, 1, 
 0, 0, N'',
-0, 0, N'', N'', 
+0, 0, N'', N'', 2,
 0, 0, 0, N'', N'', N'')
 GO
 
@@ -42,21 +42,14 @@ INSERT INTO [dbo].[JobDefinition]
 ([Id], 
 [JobType], [Category], [Name], [Description], [IsStartDisabled], [StartOnDemand], [StartBySchedule], 
 [AlreadyRunningAction], [AlreadyRunningNotificationTargetType], [AlreadyRunningNotificationTarget],
-[ScheduleDateMode], [ScheduleTimeMode], [ScheduleDates], [ScheduleTimes], 
+[ScheduleDateMode], [ScheduleTimeMode], [ScheduleDates], [ScheduleTimes], [ScheduleDateTimeKind],
 [ExecutionNotificationTargetType], [SuccessNotificationTargetType], [FailureNotificationTargetType], 
-[ExecutionNotificationTarget], [SuccessNotificationTarget], [FailureNotificationTarget], 
-[ExecutablePathname], [WorkingDirectory], 
-[Username], [Password], 
-[StartInSequence], 
-[Arguments], [AllowReplacementArguments], [IsJobFacAware], 
-[CaptureStdOut], [CaptureStdErr], [StdOutPathname], [StdErrPathname], 
-[ObserveMaximumRunTime], [MaximumRunSeconds], [StopLongRunningJob], [MaximumRunTimeNotificationTargetType], [MaximumRunTimeNotificationTarget], 
-[RetryWhenFailed], [OnlyNotifyOnce], [AllowRetryInSequences], [MaximumRetryCount], [RetryDelaySeconds]) 
+[ExecutionNotificationTarget], [SuccessNotificationTarget], [FailureNotificationTarget]) 
 VALUES 
 (N'Sample.JobFac.aware', 
 1, N'', N'Sample.JobFac.aware', N'A console program that can communicate with JobFac and requires a startup payload.', 0, 1, 1, 
 0, 0, N'',
-0, 0, N'', N'', 
+0, 0, N'', N'', 2,
 0, 0, 0, N'', N'', N'')
 GO
 

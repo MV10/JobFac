@@ -28,6 +28,7 @@ CREATE TABLE [dbo].[JobDefinition]
     [ScheduleTimeMode] INT NOT NULL, 
     [ScheduleDates] NVARCHAR(128) NOT NULL, 
     [ScheduleTimes] NVARCHAR(128) NOT NULL, 
+    [ScheduleDateTimeKind] INT NOT NULL,
     [ExecutionNotificationTargetType] INT NOT NULL, 
     [SuccessNotificationTargetType] INT NOT NULL, 
     [FailureNotificationTargetType] INT NOT NULL, 

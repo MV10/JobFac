@@ -56,6 +56,17 @@ namespace JobFac.Library.Database
             await conn.CloseAsync().ConfigureAwait(false);
         }
 
+        private protected async Task ExecAsync(IReadOnlyList<string> sqlBatches)
+        {
+            using var conn = new SqlConnection(connectionString);
+            await conn.OpenAsync().ConfigureAwait(false);
+            foreach(var sql in sqlBatches)
+            {
+                await conn.ExecuteAsync(sql).ConfigureAwait(false);
+            }
+            await conn.CloseAsync().ConfigureAwait(false);
+        }
+
         private protected async Task<T> QueryOneRowAsync<T>(string sql, object param)
             => (await QueryAsync<T>(sql, param).ConfigureAwait(false)).FirstOrDefault();
 

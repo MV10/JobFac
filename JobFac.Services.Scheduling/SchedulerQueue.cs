@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 
 namespace JobFac.Services.Scheduling
 {
+    // IClusterSingletonGrain (auto-assigned integer key 0)
     public class SchedulerQueue : Grain, ISchedulerQueue
     {
         private readonly ILogger logger;
@@ -75,7 +76,7 @@ namespace JobFac.Services.Scheduling
 
             var current = DateTimeOffset.Now.Minute;
 
-            if (current % 15 == 0)
+            if (current % ConstTimeouts.TryInvokeScheduleWriterMinutes == 0)
                 RunScheduleWriter();
 
             if (queuedJobs.Count == 0 || current != jobsQueuedForMinute)

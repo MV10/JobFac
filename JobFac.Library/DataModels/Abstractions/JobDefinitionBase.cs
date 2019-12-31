@@ -1,4 +1,6 @@
-﻿namespace JobFac.Library.DataModels.Abstractions
+﻿using System;
+
+namespace JobFac.Library.DataModels.Abstractions
 {
     public class JobDefinitionBase
     {
@@ -21,6 +23,7 @@
         public ScheduleTimeMode ScheduleTimeMode { get; set; } = ScheduleTimeMode.HoursMinutes;
         public string ScheduleDates { get; set; } = string.Empty;
         public string ScheduleTimes { get; set; } = string.Empty;
+        public DateTimeKind ScheduleDateTimeKind { get; set; } = DateTimeKind.Local;
 
         public NotificationTargetType ExecutionNotificationTargetType { get; set; } = NotificationTargetType.None;
         public NotificationTargetType SuccessNotificationTargetType { get; set; } = NotificationTargetType.None;

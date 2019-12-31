@@ -28,6 +28,9 @@ The goal is to keep this fully open sourced and free to use, along the same line
 
 ## Progress Notes
 
+2020-dec-31
+* schedule system complete (with some Local/UTC decision/issues remaining)
+
 2020-dec-30
 * scheduled execution features partly completed
 * added Config table and internal config-cache service

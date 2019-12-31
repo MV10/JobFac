@@ -5,5 +5,6 @@ namespace JobFac.Library
     {
         public static readonly int NamedPipeClientConnectMS = 500;
         public static readonly int ConfigCacheRefreshMinutes = 5;
+        public static readonly int TryInvokeScheduleWriterMinutes = 15;
     }
 }

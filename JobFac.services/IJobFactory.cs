@@ -5,8 +5,7 @@ using System.Threading.Tasks;
 
 namespace JobFac.Services
 {
-    // StatelessWorker grain
-    public interface IJobFactory : IGrainWithIntegerKey
+    public interface IJobFactory : IStatelessWorkerGrain
     {
         Task<string> StartJob(FactoryStartOptions options);
         Task<string> StartJob(FactoryStartOptions options, string replacementArguments = null, string startupPayload = null);

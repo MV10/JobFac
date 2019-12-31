@@ -16,7 +16,7 @@ namespace JobFac.Library.Logging
     // is re-output to the silo host logger. However, IDataUtilities will
     // re-use the constant as the log message category to allow filtering.
 
-    [ProviderAlias(ConstLogging.JobFacLoggerProviderName)]
+    [ProviderAlias(ConstLogging.JobFacRemoteLoggerProviderName)]
     public class JobFacLoggerProvider : BatchingLoggerProvider
     {
         private readonly IDataUtilities dataUtil;
@@ -26,7 +26,7 @@ namespace JobFac.Library.Logging
             IClusterClient clusterClient)
             : base(options)
         {
-            dataUtil = clusterClient.GetGrain<IDataUtilities>(0);
+            dataUtil = clusterClient.GetGrain<IDataUtilities>();
         }
 
         protected override async Task WriteMessagesAsync(IEnumerable<LogMessage> messages, CancellationToken token)
