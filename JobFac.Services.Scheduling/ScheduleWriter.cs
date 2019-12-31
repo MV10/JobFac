@@ -42,12 +42,16 @@ namespace JobFac.Services.Scheduling
             configCache = cache;
         }
 
-        DateTimeZone utcTimeZone = DateTimeZoneProviders.Tzdb["Etc/UTC"];
-        private List<ScheduledJobsTable> newSchedules;
+        private readonly DateTimeZone utcTimeZone = DateTimeZoneProviders.Tzdb["Etc/UTC"];
 
         // Must execute WasLastRunToday immediately to set these properly.
         private Instant today;
         private ZonedDateTime todayUtc;
+
+        // Set these before calling EvaluateJobForScheduling.
+        private TargetDateAnalysis target;
+        private bool targetDateIsToday;
+        private List<ScheduledJobsTable> newSchedules;
 
         public async Task WriteNewScheduleTargets()
         {
@@ -76,9 +80,8 @@ namespace JobFac.Services.Scheduling
                 {
                     var jobDataTimeZone = DateTimeZoneProviders.Tzdb[job.ScheduleTimeZone];
 
-                    targetDate = today.InZone(jobDataTimeZone).Plus(Duration.FromDays(1)).Date;
+                    target = new TargetDateAnalysis(today.InZone(jobDataTimeZone).Plus(Duration.FromDays(1)).Date);
                     targetDateIsToday = false;
-                    CalculateScheduleTargetValues();
                     EvaluateJobForScheduling(job);
                 }
                 catch
@@ -109,18 +112,16 @@ namespace JobFac.Services.Scheduling
             {
                 var jobDataTimeZone = DateTimeZoneProviders.Tzdb[job.ScheduleTimeZone];
 
-                targetDate = today.InZone(jobDataTimeZone).Date;
+                target = new TargetDateAnalysis(today.InZone(jobDataTimeZone).Date);
                 targetDateIsToday = true;
-                CalculateScheduleTargetValues();
                 EvaluateJobForScheduling(job);
 
                 // If we've already set up tomorrow's schedules (for all jobs)
                 // do a second pass for this job targeting tomorrow's date.
                 if(wasLastRunToday)
                 {
-                    targetDate = today.InZone(jobDataTimeZone).Plus(Duration.FromDays(1)).Date;
+                    target = new TargetDateAnalysis(today.InZone(jobDataTimeZone).Plus(Duration.FromDays(1)).Date);
                     targetDateIsToday = false;
-                    CalculateScheduleTargetValues();
                     EvaluateJobForScheduling(job);
                 }
             }
@@ -154,54 +155,6 @@ namespace JobFac.Services.Scheduling
             return (todayUtc.Date == lastRun.InUtc().Date);
         }
 
-        // Date-based information about the schedule target; used to determine
-        // whether the job should be scheduled for the date in question. Set
-        // targetDate, then call CalculateScheduleTargetValues to set the rest.
-        private LocalDate targetDate; // adjusted to ScheduleTimeZone in JobDefinition
-        private bool targetDateIsToday;
-        private int targetMonth;
-        private int targetDay;
-        private int targetLastDayOfMonth;
-        private string targetDayOfWeek;
-        private string targetDayOfMonth;
-        private string targetMonthAndDay; // mm/dd
-        private bool targetIsFirstDayOfMonth;
-        private bool targetIsLastDayOfMonth;
-        private bool targetIsFirstWeekdayOfMonth;
-        private bool targetIsLastWeekdayOfMonth;
-
-        // Set the targetDate field before calling this.
-        private void CalculateScheduleTargetValues()
-        {
-            targetLastDayOfMonth = targetDate.With(DateAdjusters.EndOfMonth).Day;
-            targetMonth = targetDate.Month;
-            targetDay = targetDate.Day;
-            targetDayOfWeek = ((int)targetDate.DayOfWeek).ToString();
-            targetDayOfMonth = targetDay.ToString();
-            targetMonthAndDay = $"{targetDate:MM/dd}";
-            targetIsFirstDayOfMonth = targetDay == 1;
-            targetIsLastDayOfMonth = targetDay == targetLastDayOfMonth;
-
-            targetIsFirstWeekdayOfMonth = targetDay == FirstWeekdayOfMonth();
-            targetIsLastWeekdayOfMonth = targetDay == LastWeekdayOfMonth();
-        }
-
-        private int FirstWeekdayOfMonth()
-        {
-            var result = targetDate.With(DateAdjusters.StartOfMonth);
-            while (result.DayOfWeek == IsoDayOfWeek.Saturday || result.DayOfWeek == IsoDayOfWeek.Sunday)
-                result.PlusDays(1);
-            return result.Day;
-        }
-
-        private int LastWeekdayOfMonth()
-        {
-            var result = targetDate.With(DateAdjusters.EndOfMonth);
-            while (result.DayOfWeek == IsoDayOfWeek.Saturday || result.DayOfWeek == IsoDayOfWeek.Sunday)
-                result.PlusDays(-1);
-            return result.Day;
-        }
-
         private void EvaluateJobForScheduling(JobsWithSchedulesQuery job)
         {
             // It's safe to assume the data returned by the query is always valid. The
@@ -213,31 +166,31 @@ namespace JobFac.Services.Scheduling
             {
                 // any of 1-7 with commas, ISO format (Monday = 1, Sunday = 7)
                 case ScheduleDateMode.DaysOfWeek:
-                    if (dates.Any(d => d.Equals(targetDayOfWeek))) CreateSchedulesForDate(job);
+                    if (dates.Any(d => d.Equals(target.DayOfWeek))) CreateSchedulesForDate(job);
                     break;
 
                 // any numeric with commas, or first,last
                 case ScheduleDateMode.DaysOfMonth:
-                    if (dates.Any(d => d.Equals(targetDayOfMonth))
-                        || (targetIsFirstDayOfMonth && dates.Any(d => d.Equals("first", StringComparison.OrdinalIgnoreCase)))
-                        || (targetIsLastDayOfMonth && dates.Any(d => d.Equals("last", StringComparison.OrdinalIgnoreCase))))
+                    if (dates.Any(d => d.Equals(target.DayOfMonth))
+                        || (target.IsFirstDayOfMonth && dates.Any(d => d.Equals("first", StringComparison.OrdinalIgnoreCase)))
+                        || (target.IsLastDayOfMonth && dates.Any(d => d.Equals("last", StringComparison.OrdinalIgnoreCase))))
                         CreateSchedulesForDate(job);
                     break;
 
                 // mm/dd,mm/dd,mm/dd
                 case ScheduleDateMode.SpecificDates:
-                    if (dates.Any(d => d.Equals(targetMonthAndDay))) CreateSchedulesForDate(job);
+                    if (dates.Any(d => d.Equals(target.MonthAndDay))) CreateSchedulesForDate(job);
                     break;
 
                 // mm/dd-mm/dd,mm/dd-mm/dd (inclusive)
                 case ScheduleDateMode.DateRanges:
-                    if (dates.Any(d => InDateRange(d))) CreateSchedulesForDate(job);
+                    if (dates.Any(d => target.InDateRange(d))) CreateSchedulesForDate(job);
                     break;
 
                 // first,last
                 case ScheduleDateMode.WeekdaysOfMonth:
-                    if ((targetIsFirstWeekdayOfMonth && dates.Any(d => d.Equals("first", StringComparison.OrdinalIgnoreCase)))
-                        || (targetIsLastWeekdayOfMonth && dates.Any(d => d.Equals("last", StringComparison.OrdinalIgnoreCase))))
+                    if ((target.IsFirstWeekdayOfMonth && dates.Any(d => d.Equals("first", StringComparison.OrdinalIgnoreCase)))
+                        || (target.IsLastWeekdayOfMonth && dates.Any(d => d.Equals("last", StringComparison.OrdinalIgnoreCase))))
                         CreateSchedulesForDate(job);
                     break;
             }
@@ -299,7 +252,7 @@ namespace JobFac.Services.Scheduling
                         newSchedules.Add(new ScheduledJobsTable
                         {
                             DefinitionId = job.Id,
-                            ScheduleTarget = new LocalDateTime(targetDate.Year, targetMonth, targetDay, hour, minute)
+                            ScheduleTarget = new LocalDateTime(target.Date.Year, target.Month, target.Day, hour, minute)
                                                 .InZoneStrictly(jobDataTimeZone)
                                                 .WithZone(utcTimeZone)
                                                 .ToDateTimeOffset()
@@ -312,18 +265,6 @@ namespace JobFac.Services.Scheduling
                     // are invalid for the requested timezone.
                 }
             }
-        }
-
-        // For ScheduleDateMode.DateRanges the ScheduleDates values should be date ranges in the
-        // format mm/dd-mm/dd (exactly that format); this determines if targetDate is in that
-        // range (inclusive of the start/end dates for the range).
-        private bool InDateRange(string range)
-        {
-            var m1 = int.Parse(range.Substring(0, 2));
-            var d1 = int.Parse(range.Substring(3, 2));
-            var m2 = int.Parse(range.Substring(6, 2));
-            var d2 = int.Parse(range.Substring(9, 2));
-            return ((targetMonth > m1 || (targetMonth == m1 && targetDay >= d1)) && (targetMonth < m2 || (targetMonth == m2 && targetDay <= d2)));
         }
 
         private (int, int) GetHourMinute(string HHmm)
