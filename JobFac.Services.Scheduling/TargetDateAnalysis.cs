@@ -1,16 +1,21 @@
 ﻿using NodaTime;
 
+//
+//  IMPORTANT: 
+//  ALL SCHEDULING/TIMING USES THE NODA TIME LIBRARY.
+//  NODA TIME "INSTANT" IS ONLY CONVERTED TO UTC DATETIMEOFFSET FOR SQL STORAGE.
+//
+
 // Date-based information about a schedule target; used to determine
-// whether the job should be scheduled for the date in question. Set
-// targetDate, then call CalculateScheduleTargetValues to set the rest.
+// whether the job should be scheduled for the date in question.
 
 namespace JobFac.Services.Scheduling
 {
     public class TargetDateAnalysis
     {
-        public TargetDateAnalysis(LocalDate forTargetDate)
+        public TargetDateAnalysis(LocalDate forZonedTargetDate)
         {
-            Date = forTargetDate;
+            Date = forZonedTargetDate;
             LastDayOfMonth = Date.With(DateAdjusters.EndOfMonth).Day;
             Month = Date.Month;
             Day = Date.Day;
