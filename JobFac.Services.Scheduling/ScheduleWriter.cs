@@ -42,8 +42,6 @@ namespace JobFac.Services.Scheduling
             configCache = cache;
         }
 
-        private readonly DateTimeZone utcTimeZone = DateTimeZoneProviders.Tzdb["Etc/UTC"];
-
         // Must execute WasLastRunToday immediately to set these properly.
         private Instant today;
         private ZonedDateTime todayUtc;
@@ -254,7 +252,7 @@ namespace JobFac.Services.Scheduling
                             DefinitionId = job.Id,
                             ScheduleTarget = new LocalDateTime(target.Date.Year, target.Month, target.Day, hour, minute)
                                                 .InZoneStrictly(jobDataTimeZone)
-                                                .WithZone(utcTimeZone)
+                                                .ToInstant()
                                                 .ToDateTimeOffset()
                     });
                     }
