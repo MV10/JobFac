@@ -90,7 +90,7 @@ namespace JobFac.Services.Scheduling
 
         public void IdleUntilNextMinute()
         {
-            var delay = 1000 - DateTimeOffset.Now.Millisecond;
+            var delay = 61000 - DateTimeOffset.Now.Millisecond;
             timerHandle = RegisterTimer(async (_) => { await RequestNewWork(); }, null, TimeSpan.FromMilliseconds(delay), TimeSpan.FromMinutes(1));
             logger.LogInformation($"Delaying {delay} ms");
         }

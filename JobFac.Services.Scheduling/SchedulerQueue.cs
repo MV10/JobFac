@@ -23,7 +23,6 @@ namespace JobFac.Services.Scheduling
         private readonly ILogger logger;
         private readonly ConfigCacheService configCache;
         private readonly ScheduleRepository scheduleRepository;
-        private readonly IScheduleWriter scheduleWriter;
 
         public SchedulerQueue(
             ILoggerFactory loggerFactory, 
@@ -33,8 +32,10 @@ namespace JobFac.Services.Scheduling
             logger = loggerFactory.CreateLogger(ConstLogging.JobFacCategorySchedulerQueue);
             this.scheduleRepository = scheduleRepository;
             this.configCache = configCache;
-            scheduleWriter = GrainFactory.GetGrain<IScheduleWriter>();
         }
+
+        // Assigned from OnActivateAsync (can't use GrainFactory in ctor)
+        private IScheduleWriter scheduleWriter;
 
         // Tracks when a given SchedulerService was last seen; count determines how many jobs are assigned by GetAssignedJobs.
         private Dictionary<string, Instant> knownServices = new Dictionary<string, Instant>();
@@ -56,8 +57,8 @@ namespace JobFac.Services.Scheduling
         
         public override async Task OnActivateAsync()
         {
+            scheduleWriter = GrainFactory.GetGrain<IScheduleWriter>();
             maxJobAssignment = int.Parse(await configCache.GetValue(ConstConfigKeys.SchedulerQueueMaxJobAssignment));
-
             await base.OnActivateAsync();
         }
 
