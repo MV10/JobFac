@@ -29,11 +29,15 @@ The goal is to keep this fully open sourced and free to use, along the same line
 
 ## Progress Notes
 
-2020-dec-31
+2020-jan-01
+* :beer: :fireworks: :date: :sparkler: :cocktail:
+* refactored schedule planner to allow intenstive testing
+
+2019-dec-31
 * scheduling system complete
 * refactored all date/time handling to Noda Time (avoid DST/timezone issues etc.)
 
-2020-dec-30
+2019-dec-30
 * scheduled execution features partly completed
 * added Config table and internal config-cache service
 

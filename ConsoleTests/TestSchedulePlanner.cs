@@ -67,7 +67,7 @@ namespace ConsoleTests
                     ScheduleDateMode = ScheduleDateMode.DaysOfWeek,
                     ScheduleDates = "1,2,3,4,5,6,7",
                     ScheduleTimeMode = ScheduleTimeMode.Interval,
-                    ScheduleTimes = "10"
+                    ScheduleTimes = "30"
                 },
             };
     }
