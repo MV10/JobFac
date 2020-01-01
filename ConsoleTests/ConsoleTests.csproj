@@ -17,7 +17,8 @@
   <ItemGroup>
     <ProjectReference Include="..\JobFac.Library.Database\JobFac.Library.Database.csproj" />
     <ProjectReference Include="..\JobFac.Library\JobFac.Library.csproj" />
-    <ProjectReference Include="..\JobFac.services\JobFac.services.csproj" />
+    <ProjectReference Include="..\JobFac.Services\JobFac.Services.csproj" />
+    <ProjectReference Include="..\JobFac.Services.Scheduling\JobFac.Services.Scheduling.csproj" />
   </ItemGroup>
 
   <ItemGroup>
