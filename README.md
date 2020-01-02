@@ -29,6 +29,10 @@ The goal is to keep this fully open sourced and free to use, along the same line
 
 ## Progress Notes
 
+2020-jan-02
+* all schedule date/time combinations tested
+* initial work to support job sequence execution
+
 2020-jan-01
 * :beer: :fireworks: :date: :sparkler: :cocktail:
 * refactored schedule planner to allow intenstive testing

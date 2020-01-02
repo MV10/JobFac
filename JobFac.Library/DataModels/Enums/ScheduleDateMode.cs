@@ -7,6 +7,6 @@
         DaysOfMonth = 2,        // any numeric with commas, or first,last
         SpecificDates = 3,      // mm/dd,mm/dd,mm/dd
         DateRanges = 4,         // mm/dd-mm/dd,mm/dd-mm/dd (inclusive)
-        WeekdaysOfMonth = 5,    // first,last
+        Weekdays = 5,           // first,last,weekday,weekend
     }
 }

@@ -25,6 +25,7 @@ namespace JobFac.Services.Scheduling
             IsFirstDayOfMonth = Day == 1;
             IsLastDayOfMonth = Day == LastDayOfMonth;
 
+            IsWeekday = Date.DayOfWeek < IsoDayOfWeek.Saturday;
             IsFirstWeekdayOfMonth = Day == FirstWeekdayOfMonth();
             IsLastWeekdayOfMonth = Day == LastWeekdayOfMonth();
         }
@@ -40,6 +41,7 @@ namespace JobFac.Services.Scheduling
         public string MonthAndDay { get; private set; } // mm/dd
         public bool IsFirstDayOfMonth { get; private set; }
         public bool IsLastDayOfMonth { get; private set; }
+        public bool IsWeekday { get; private set; }
         public bool IsFirstWeekdayOfMonth { get; private set; }
         public bool IsLastWeekdayOfMonth { get; private set; }
 
@@ -52,7 +54,15 @@ namespace JobFac.Services.Scheduling
             var d1 = int.Parse(range.Substring(3, 2));
             var m2 = int.Parse(range.Substring(6, 2));
             var d2 = int.Parse(range.Substring(9, 2));
-            return ((Month > m1 || (Month == m1 && Day >= d1)) && (Month < m2 || (Month == m2 && Day <= d2)));
+
+            var c1 = Month > m1 || (Month == m1 && Day >= d1);
+            var c2 = Month < m2 || (Month == m2 && Day <= d2);
+
+            // Range crosses the year-boundary (ex. 12/01-02/01):
+            if (m1 > m2 || (m1 == m2 && d1 > d2)) return c1 || c2;
+
+            // Range is within the year:
+            return c1 && c2;
         }
 
         private int FirstWeekdayOfMonth()

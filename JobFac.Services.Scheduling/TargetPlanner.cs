@@ -83,10 +83,12 @@ namespace JobFac.Services.Scheduling
                     if (dates.Any(d => target.InDateRange(d))) CreateSchedulesForDate();
                     break;
 
-                // first,last
-                case ScheduleDateMode.WeekdaysOfMonth:
+                // first,last,weekday,weekend
+                case ScheduleDateMode.Weekdays:
                     if ((target.IsFirstWeekdayOfMonth && dates.Any(d => d.Equals("first", StringComparison.OrdinalIgnoreCase)))
-                        || (target.IsLastWeekdayOfMonth && dates.Any(d => d.Equals("last", StringComparison.OrdinalIgnoreCase))))
+                        || (target.IsLastWeekdayOfMonth && dates.Any(d => d.Equals("last", StringComparison.OrdinalIgnoreCase)))
+                        || (target.IsWeekday && dates.Any(d => d.Equals("weekday", StringComparison.OrdinalIgnoreCase)))
+                        || (!target.IsWeekday && dates.Any(d => d.Equals("weekend", StringComparison.OrdinalIgnoreCase))))
                         CreateSchedulesForDate();
                     break;
             }
