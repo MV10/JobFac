@@ -19,7 +19,6 @@ namespace ConsoleTests
                 host.ConfigureLogging(builder => builder.SetMinimumLevel(LogLevel.Warning));
 
                 // CTRL+C support, although that won't stop the Runner or job
-                // TODO does CTRL+C here cause the Runner to *never* unload?
                 host.UseConsoleLifetime();
 
                 await host.AddJobFacClientAsync();
