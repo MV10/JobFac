@@ -73,7 +73,7 @@ namespace JobFac.Library.DataModels
             // Sequences do not have additional properties to validate.
         }
 
-        public static void ThrowIfInvalid(this StepDefinition def)
+        public static void ThrowIfInvalid(this DefinitionSequenceStep def)
         {
             if (!def.JobDefinitionIdList.HasContent())
                 Throw("JobDefinitionIdList required");
@@ -87,17 +87,8 @@ namespace JobFac.Library.DataModels
             if (def.StartTimeDecision != StepStartTimeDecision.NoDecision && !def.StartTimes.HasContent())
                 Throw("setting StartDecision2 requires a value in StartTimes");
 
-            if (def.StartDateDecision != StepStartDateDecision.NoDecision && def.StartTrueStepNumber < 1)
-                Throw("StartTrueStepnumber must be 1 or greater when Start Decisions are set");
-
-            if (def.StartDateDecision != StepStartDateDecision.NoDecision && def.StartTrueStepNumber < 1)
-                Throw("StartTrueStepnumber must be 1 or greater when Start Decisions are set");
-
             if (def.StartDateDecision != StepStartDateDecision.NoDecision && def.StartFalseStepNumber < 1)
                 Throw("StartFalseStepNumber must be 1 or greater when Start Decisions are set");
-
-            if (def.StartDateDecision != StepStartDateDecision.NoDecision && def.StartTrueStepNumber == def.StartFalseStepNumber)
-                Throw("Star tDecisions are set but StartTrueStepNumber and StartFalseStepNumber are the same value");
 
             // TODO validate StartDateDecision vs StartDates content
             // TODO validate StartTimeDecision vs StartTimes content

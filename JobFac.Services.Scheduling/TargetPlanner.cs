@@ -57,7 +57,7 @@ namespace JobFac.Services.Scheduling
             // The query excludes ScheduleDateMode.Unscheduled records, and the validator
             // for BaseDefinition ensures all of the settings and combinations are correct.
 
-            var dates = job.ScheduleDates.Split(",", StringSplitOptions.RemoveEmptyEntries).ToList();
+            var dates = Formatting.SplitCommaSeparatedList(job.ScheduleDates);
 
             switch (job.ScheduleDateMode)
             {
@@ -78,7 +78,7 @@ namespace JobFac.Services.Scheduling
 
                 // mm/dd-mm/dd,mm/dd-mm/dd (inclusive)
                 case ScheduleDateMode.DateRanges:
-                    if (analysis.InDateRange(dates)) CreateSchedulesForDate();
+                    if (analysis.InDateRanges(dates)) CreateSchedulesForDate();
                     break;
 
                 // first,last,weekday,weekend
@@ -98,7 +98,7 @@ namespace JobFac.Services.Scheduling
             var filterHour = todayUtc.Hour;
             var filterMinute = todayUtc.Minute;
 
-            var times = job.ScheduleTimes.Split(",", StringSplitOptions.RemoveEmptyEntries).ToList();
+            var times = Formatting.SplitCommaSeparatedList(job.ScheduleTimes);
 
             switch (job.ScheduleTimeMode)
             {

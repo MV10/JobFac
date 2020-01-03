@@ -1,6 +1,6 @@
 ﻿namespace JobFac.Library.DataModels
 {
-    public class StepDefinition
+    public class DefinitionSequenceStep
     {
         public string SequenceId { get; set; } = string.Empty;
         public int Step { get; set; } = 0;
@@ -14,9 +14,7 @@
         public string StartDates { get; set; } = string.Empty;
         public string StartTimes { get; set; } = string.Empty;
         public string StartDecisionTimeZone { get; set; } = "America/New_York"; // UTC is "Etc/UTC" https://nodatime.org/TimeZones
-        public StepAction StartTrueAction { get; set; } = StepAction.DoStepNumber;
         public StepAction StartFalseAction { get; set; } = StepAction.DoStepNumber;
-        public int StartTrueStepNumber { get; set; } = 0;   // use current step# for either of these
         public int StartFalseStepNumber { get; set; } = 0;
 
         public StepExitDecision ExitDecision { get; set; } = StepExitDecision.DoActionWhenAllExit;

@@ -41,7 +41,7 @@ namespace JobFac.Library.Database
                 new { Id = id }).ConfigureAwait(false);
         }
 
-        public async Task<IReadOnlyList<StepDefinition>> GetStepsForSequence(string id)
-            => await QueryAsync<StepDefinition>(ConstQueries.SelectSequenceSteps, new { Id = id }).ConfigureAwait(false);
+        public async Task<IReadOnlyList<DefinitionSequenceStep>> GetStepsForSequence(string id)
+            => await QueryAsync<DefinitionSequenceStep>(ConstQueries.SelectSequenceSteps, new { Id = id }).ConfigureAwait(false);
     }
 }

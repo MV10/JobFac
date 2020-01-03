@@ -1,6 +1,7 @@
 ﻿using NodaTime;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 
 //
@@ -17,14 +18,40 @@ namespace JobFac.Library
     public class DateTimeAnalysis
     {
         public DateTimeAnalysis(LocalDate forZonedTargetDate)
-            => Constructor(forZonedTargetDate);
+        {
+            // the scheduler doesn't use the time of day, which is 
+            // discarded before DateTimeAnalysis is created
+            Time = forZonedTargetDate.AtMidnight().TimeOfDay;
+            Constructor(forZonedTargetDate);
+        }
 
         public DateTimeAnalysis(string nowForTimeZone)
         {
             var tz = DateTimeZoneProviders.Tzdb[nowForTimeZone];
-            var now = SystemClock.Instance.GetCurrentInstant().InZone(tz).Date;
-            Constructor(now);
+            var now = SystemClock.Instance.GetCurrentInstant().InZone(tz);
+            Time = now.TimeOfDay;
+            Constructor(now.Date);
         }
+
+        public LocalDate Date { get; private set; }  // adjusted to ScheduleTimeZone from the JobDefinition
+        public LocalTime Time { get; private set; }  // only used by sequence steps, not used by scheduler
+
+        public bool DateIsToday { get; private set; }
+        public int Month { get; private set; }
+        public int Day { get; private set; }
+        public int LastDayOfMonth { get; private set; }
+        public string DayOfWeek { get; private set; }
+        public string DayOfMonth { get; private set; }
+        public string MonthAndDay { get; private set; } // mm/dd
+        public bool IsFirstDayOfMonth { get; private set; }
+        public bool IsLastDayOfMonth { get; private set; }
+        public bool IsWeekday { get; private set; }
+        public bool IsFirstWeekdayOfMonth { get; private set; }
+        public bool IsLastWeekdayOfMonth { get; private set; }
+
+        public string HourMinute { get; private set; }  // HHmm
+        public string Hour { get; private set; }        // HH
+        public string Minute { get; private set; }      // mm
 
         private void Constructor(LocalDate forZonedTargetDate)
         {
@@ -41,22 +68,12 @@ namespace JobFac.Library
             IsWeekday = Date.DayOfWeek < IsoDayOfWeek.Saturday;
             IsFirstWeekdayOfMonth = Day == FirstWeekdayOfMonth();
             IsLastWeekdayOfMonth = Day == LastWeekdayOfMonth();
+
+            var fmt = CultureInfo.InvariantCulture.DateTimeFormat;
+            HourMinute = Time.ToString("HHmm", fmt);
+            Hour = Time.ToString("HH", fmt);
+            Minute = Time.ToString("mm", fmt);
         }
-
-        public LocalDate Date { get; private set; }  // adjusted to ScheduleTimeZone from the JobDefinition
-
-        public bool DateIsToday { get; private set; }
-        public int Month { get; private set; }
-        public int Day { get; private set; }
-        public int LastDayOfMonth { get; private set; }
-        public string DayOfWeek { get; private set; }
-        public string DayOfMonth { get; private set; }
-        public string MonthAndDay { get; private set; } // mm/dd
-        public bool IsFirstDayOfMonth { get; private set; }
-        public bool IsLastDayOfMonth { get; private set; }
-        public bool IsWeekday { get; private set; }
-        public bool IsFirstWeekdayOfMonth { get; private set; }
-        public bool IsLastWeekdayOfMonth { get; private set; }
 
         public bool InDaysOfWeek(List<string> dates)
             => dates.Any(d => d.Equals(DayOfWeek));
@@ -69,7 +86,7 @@ namespace JobFac.Library
         public bool InSpecificDates(List<string> dates)
             => dates.Any(d => d.Equals(MonthAndDay));
 
-        public bool InDateRange(List<string> dates)
+        public bool InDateRanges(List<string> dates)
             => dates.Any(d => InDateRange(d));
 
         public bool InWeekdays(List<string> dates)
@@ -78,22 +95,44 @@ namespace JobFac.Library
             || (IsWeekday && dates.Any(d => d.Equals("weekday", StringComparison.OrdinalIgnoreCase)))
             || (!IsWeekday && dates.Any(d => d.Equals("weekend", StringComparison.OrdinalIgnoreCase)));
 
-        // The date range values should be in the exact format mm/dd-mm/dd. This method determines
-        // if target.Date is in that range, inclusive of the start/end dates for the range.
+        public bool InHours(List<string> times)
+            => times.Any(t => t.Equals(Hour));
+
+        public bool InMinutes(List<string> times)
+            => times.Any(t => t.Equals(Minute));
+
+        public bool InSpecificTimes(List<string> times)
+            => times.Any(t => t.Equals(HourMinute));
+
+        public bool InTimeRanges(List<string> times)
+            => times.Any(t => InTimeRange(t));
+
         public bool InDateRange(string range)
+            => InRange(range, Month, Day);
+
+        public bool InTimeRange(string range)
+            => InRange(range, Time.Hour, Time.Minute);
+
+        private bool InRange(string range, int major, int minor)
         {
-            var m1 = int.Parse(range.Substring(0, 2));
-            var d1 = int.Parse(range.Substring(3, 2));
-            var m2 = int.Parse(range.Substring(6, 2));
-            var d2 = int.Parse(range.Substring(9, 2));
+            // Ranges can be dates like "12/10-12/20" or "12-10-12-20" or times
+            // such as "0945-1030" or "09:45-10:30" but this strips them down to
+            // eight characters ... 12101220 or 09451030.
+            var r = range.Replace(" ", "").Replace("/", "").Replace(":", "").Replace("-", "");
 
-            var c1 = Month > m1 || (Month == m1 && Day >= d1);
-            var c2 = Month < m2 || (Month == m2 && Day <= d2);
+            var A1 = int.Parse(range.Substring(0, 2));
+            var B1 = int.Parse(range.Substring(2, 2));
+            var A2 = int.Parse(range.Substring(4, 2));
+            var B2 = int.Parse(range.Substring(6, 2));
 
-            // Range crosses the year-boundary (ex. 12/01-02/01):
-            if (m1 > m2 || (m1 == m2 && d1 > d2)) return c1 || c2;
+            var c1 = major > A1 || (major == A1 && minor >= B1);
+            var c2 = major < A2 || (major == A2 && minor <= B2);
 
-            // Range is within the year:
+            // Date-range crosses the year-boundary (ex. 12/01-02/01)
+            // or time-range crosses the day-boundary (ex. 2300-0200)
+            if (A1 > A2 || (A1 == A2 && B1 > B2)) return c1 || c2;
+
+            // Range is within the same year or day:
             return c1 && c2;
         }
 

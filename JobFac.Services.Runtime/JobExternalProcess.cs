@@ -120,11 +120,11 @@ namespace JobFac.Services.Runtime
             if (status == null)
                 throw new Exception($"Job has not been started (instance {jobInstanceKey})");
 
-            if (status.RunStatus != RunStatus.Running)
-                throw new Exception($"Job is not in Running status (instance {jobInstanceKey})");
-
             if (status.HasExited)
                 throw new Exception($"Job has already exited (instance {jobInstanceKey})");
+
+            if (status.RunStatus != RunStatus.Running)
+                throw new Exception($"Job is not in Running status (instance {jobInstanceKey})");
 
             await StoreNewRunStatus(RunStatus.StopRequested);
 
@@ -212,7 +212,7 @@ namespace JobFac.Services.Runtime
             await historyRepo.UpdateStatus(status);
 
             if (parentSequence != null)
-                await parentSequence.JobStatusChanged(status);
+                await parentSequence.SequencedJobStatusChanged(status);
         }
     }
 }

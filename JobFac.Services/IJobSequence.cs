@@ -9,7 +9,8 @@ namespace JobFac.Services
     {
         Task Start(JobDefinition<DefinitionSequence> jobDefinition, FactoryStartOptions options);
         Task<JobStatus<StatusSequence>> GetStatus();
-        Task JobStatusChanged(JobStatus<StatusExternalProcess> jobStatus);
+        Task SequencedJobStatusChanged(JobStatus<StatusExternalProcess> jobStatus);
+        Task EndSequence();
         Task Stop();
     }
 }

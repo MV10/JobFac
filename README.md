@@ -29,6 +29,9 @@ The goal is to keep this fully open sourced and free to use, along the same line
 
 ## Progress Notes
 
+2020-jan-03
+* job sequence support completed
+
 2020-jan-02
 * all schedule date/time combinations tested
 * initial work to support job sequence execution
