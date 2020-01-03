@@ -1,6 +1,7 @@
 ﻿using JobFac.Library;
 using JobFac.Library.Database;
 using JobFac.Library.DataModels;
+using JobFac.Library.DataModels.Abstractions;
 using Orleans;
 using Orleans.Concurrency;
 using System;
@@ -71,15 +72,46 @@ namespace JobFac.Services.Runtime
             if (options.StartupPayloads.ContainsKey(id) && !jobDefinition.JobTypeProperties.IsJobFacAware)
                 throw new Exception($"Job definition {id} is not JobFac-aware and doesn't support startup payloads");
 
+            await ProcessAlreadyRunningJobs(jobDefinition);
+
+            var jobInstanceKey = Formatting.NewInstanceKey;
+            
+            var jobGrain = GrainFactory.GetGrain<IJobExternalProcess>(jobInstanceKey);
+            await jobGrain.Start(jobDefinition, options);
+            
+            return jobInstanceKey;
+        }
+
+        private async Task<string> StartJobSequence(FactoryStartOptions options)
+        {
+            var id = options.DefinitionId;
+
+            var jobDefinition = await definitionRepo.GetJobDefinition<DefinitionSequence>(id);
+            if (jobDefinition == null)
+                throw new Exception("Invalid job definition id");
+
+            await ProcessAlreadyRunningJobs(jobDefinition);
+
+            var jobInstanceKey = Formatting.NewInstanceKey;
+            options.SequenceInstanceId = jobInstanceKey;
+
+            var jobGrain = GrainFactory.GetGrain<IJobSequence>(jobInstanceKey);
+            await jobGrain.Start(jobDefinition, options);
+            
+            return jobInstanceKey;
+        }
+
+        private async Task ProcessAlreadyRunningJobs(JobDefinitionBase jobDefinition)
+        {
             if (jobDefinition.AlreadyRunningAction != AlreadyRunningAction.StartNormally)
             {
-                var instances = await historyRepo.GetActiveJobInstanceIds(id);
+                var instances = await historyRepo.GetActiveJobInstanceIds(jobDefinition.Id);
                 if (instances.Count > 0)
                 {
                     // TODO job-already-running notifications
 
                     if (jobDefinition.AlreadyRunningAction == AlreadyRunningAction.DoNotStart)
-                        throw new Exception($"Job definition {id} is already running and is not configured to start additional instances");
+                        throw new Exception($"Job definition {jobDefinition.Id} is already running and is not configured to start additional instances");
 
                     if (jobDefinition.AlreadyRunningAction == AlreadyRunningAction.StopOthersBeforeStarting)
                     {
@@ -91,19 +123,6 @@ namespace JobFac.Services.Runtime
                     }
                 }
             }
-
-            var jobInstanceKey = Formatting.NewInstanceKey;
-
-            var jobGrain = GrainFactory.GetGrain<IJobExternalProcess>(jobInstanceKey);
-            await jobGrain.Start(jobDefinition, options);
-
-            return jobInstanceKey;
-        }
-
-        private async Task<string> StartJobSequence(FactoryStartOptions options)
-        {
-            // TODO start a sequenced job
-            return string.Empty;
         }
     }
 }

@@ -18,6 +18,7 @@ namespace JobFac.Services.Runtime
         private string jobInstanceKey = null;
         private JobStatus<StatusExternalProcess> status = null;
         private JobDefinition<DefinitionExternalProcess> jobDefinition = null;
+        private IJobSequence parentSequence = null;
 
         private readonly HistoryRepository historyRepo;
         private readonly string runnerExecutablePathname;
@@ -41,6 +42,13 @@ namespace JobFac.Services.Runtime
                 throw new Exception($"Job has already been started (instance {jobInstanceKey})");
 
             jobDefinition.ThrowIfInvalid();
+
+            if(options.SequenceInstanceId.HasContent())
+            {
+                parentSequence = GrainFactory.GetGrain<IJobSequence>(options.SequenceInstanceId);
+                if (parentSequence == null)
+                    throw new Exception($"Job {jobInstanceKey} failed to obtain parent Sequence {options.SequenceInstanceId}");
+            }
 
             this.jobDefinition = jobDefinition;
 
@@ -147,6 +155,7 @@ namespace JobFac.Services.Runtime
                     return;
                 }
             }
+            // TODO catch semantics for launching Runner (based on how Runner manages external procs)
             finally
             {
                 proc?.Close(); // releases resources but does not terminate process
@@ -201,6 +210,9 @@ namespace JobFac.Services.Runtime
             }
 
             await historyRepo.UpdateStatus(status);
+
+            if (parentSequence != null)
+                await parentSequence.JobStatusChanged(status);
         }
     }
 }

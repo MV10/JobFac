@@ -1,4 +1,5 @@
-﻿using JobFac.Library.Database;
+﻿using JobFac.Library;
+using JobFac.Library.Database;
 using JobFac.Library.DataModels;
 using Microsoft.Extensions.Logging;
 using NodaTime;
@@ -22,7 +23,7 @@ namespace JobFac.Services.Scheduling
     public class TargetPlanner
     {
         private readonly JobsWithSchedulesQuery job;
-        private readonly TargetDateAnalysis target;
+        private readonly DateTimeAnalysis analysis;
         private readonly ILogger logger;
         private readonly Instant targetDate;
         private readonly DateTimeZone jobZone;
@@ -38,7 +39,7 @@ namespace JobFac.Services.Scheduling
 
             jobZone = DateTimeZoneProviders.Tzdb[job.ScheduleTimeZone];
             var zonedDate = forTargetDate.InZone(jobZone).Date;
-            target = new TargetDateAnalysis(zonedDate);
+            analysis = new DateTimeAnalysis(zonedDate);
         }
 
         private List<ScheduledJobsTable> newSchedules = new List<ScheduledJobsTable>();
@@ -62,34 +63,27 @@ namespace JobFac.Services.Scheduling
             {
                 // any of 1-7 with commas, ISO format (Monday = 1, Sunday = 7)
                 case ScheduleDateMode.DaysOfWeek:
-                    if (dates.Any(d => d.Equals(target.DayOfWeek))) CreateSchedulesForDate();
+                    if (analysis.InDaysOfWeek(dates)) CreateSchedulesForDate();
                     break;
 
                 // any numeric with commas, or first,last
                 case ScheduleDateMode.DaysOfMonth:
-                    if (dates.Any(d => d.Equals(target.DayOfMonth))
-                        || (target.IsFirstDayOfMonth && dates.Any(d => d.Equals("first", StringComparison.OrdinalIgnoreCase)))
-                        || (target.IsLastDayOfMonth && dates.Any(d => d.Equals("last", StringComparison.OrdinalIgnoreCase))))
-                        CreateSchedulesForDate();
+                    if (analysis.InDaysOfMonth(dates)) CreateSchedulesForDate();
                     break;
 
                 // mm/dd,mm/dd,mm/dd
                 case ScheduleDateMode.SpecificDates:
-                    if (dates.Any(d => d.Equals(target.MonthAndDay))) CreateSchedulesForDate();
+                    if (analysis.InSpecificDates(dates)) CreateSchedulesForDate();
                     break;
 
                 // mm/dd-mm/dd,mm/dd-mm/dd (inclusive)
                 case ScheduleDateMode.DateRanges:
-                    if (dates.Any(d => target.InDateRange(d))) CreateSchedulesForDate();
+                    if (analysis.InDateRange(dates)) CreateSchedulesForDate();
                     break;
 
                 // first,last,weekday,weekend
                 case ScheduleDateMode.Weekdays:
-                    if ((target.IsFirstWeekdayOfMonth && dates.Any(d => d.Equals("first", StringComparison.OrdinalIgnoreCase)))
-                        || (target.IsLastWeekdayOfMonth && dates.Any(d => d.Equals("last", StringComparison.OrdinalIgnoreCase)))
-                        || (target.IsWeekday && dates.Any(d => d.Equals("weekday", StringComparison.OrdinalIgnoreCase)))
-                        || (!target.IsWeekday && dates.Any(d => d.Equals("weekend", StringComparison.OrdinalIgnoreCase))))
-                        CreateSchedulesForDate();
+                    if (analysis.InWeekdays(dates)) CreateSchedulesForDate();
                     break;
             }
         }
@@ -124,7 +118,7 @@ namespace JobFac.Services.Scheduling
                 case ScheduleTimeMode.HoursMinutes:
                     foreach (var time in times)
                     {
-                        var (hour, minute) = GetHourMinute(time);
+                        var (hour, minute) = DateTimeAnalysis.GetHourMinute(time);
                         TryAddUtcEntry(hour, minute);
                     }
                     break;
@@ -144,7 +138,7 @@ namespace JobFac.Services.Scheduling
 
             void TryAddUtcEntry(int hour, int minute)
             {
-                var local = new LocalDateTime(target.Date.Year, target.Month, target.Day, hour, minute);
+                var local = new LocalDateTime(analysis.Date.Year, analysis.Month, analysis.Day, hour, minute);
                 try
                 {
                     var scheduleTarget = local
@@ -167,15 +161,6 @@ namespace JobFac.Services.Scheduling
                     logger?.LogWarning($"Skipping invalid/ambiguous results applying timezone {jobZone.Id} to {LocalDateTimePattern.GeneralIso.Format(local)}");
                 }
             }
-        }
-
-        // Static because it's also used by ScheduleWriter.
-        public static (int, int) GetHourMinute(string HHmm)
-        {
-            int n = HHmm.Length - 2;
-            int hour = int.Parse(HHmm.Substring(0, n));
-            int minute = int.Parse(HHmm.Substring(n, 2));
-            return (hour, minute);
         }
     }
 }

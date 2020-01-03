@@ -67,34 +67,44 @@ namespace JobFac.Library.DataModels
                 Throw("RetryWhenFailed requires MaximumRetryCount of 1 or greater");
         }
 
+        public static void ThrowIfInvalid(this JobDefinition<DefinitionSequence> def)
+        {
+            ((JobDefinitionBase)def).ThrowIfInvalid();
+            // Sequences do not have additional properties to validate.
+        }
+
         public static void ThrowIfInvalid(this StepDefinition def)
         {
             if (!def.JobDefinitionIdList.HasContent())
                 Throw("JobDefinitionIdList required");
 
-            if (def.StartDecision1 == StepStartDecision.NoDecision && def.StartDecision2 != StepStartDecision.NoDecision)
-                Throw("StartDecision1 must be set before setting StartDecision2");
+            if (def.StartDateDecision == StepStartDateDecision.NoDecision && def.StartTimeDecision != StepStartTimeDecision.NoDecision)
+                Throw("StartDateDecision must be set before setting StartTimeDecision");
 
-            if (def.StartDecision1 != StepStartDecision.NoDecision && !def.StartCriteria1.HasContent())
-                Throw("setting StartDecision1 requires a value in StartCriteria1");
+            if (def.StartDateDecision != StepStartDateDecision.NoDecision && !def.StartDates.HasContent())
+                Throw("setting StartDateDecision requires a value in StartDates");
 
-            if (def.StartDecision2 != StepStartDecision.NoDecision && !def.StartCriteria2.HasContent())
-                Throw("setting StartDecision2 requires a value in StartCriteria2");
+            if (def.StartTimeDecision != StepStartTimeDecision.NoDecision && !def.StartTimes.HasContent())
+                Throw("setting StartDecision2 requires a value in StartTimes");
 
-            if (def.StartDecision1 != StepStartDecision.NoDecision && def.StartTrueStepNumber < 1)
-                Throw("StartTrueStepnumber must be 1 or greater when StartDecisions are set");
+            if (def.StartDateDecision != StepStartDateDecision.NoDecision && def.StartTrueStepNumber < 1)
+                Throw("StartTrueStepnumber must be 1 or greater when Start Decisions are set");
 
-            if (def.StartDecision1 != StepStartDecision.NoDecision && def.StartTrueStepNumber < 1)
-                Throw("StartTrueStepnumber must be 1 or greater when StartDecisions are set");
+            if (def.StartDateDecision != StepStartDateDecision.NoDecision && def.StartTrueStepNumber < 1)
+                Throw("StartTrueStepnumber must be 1 or greater when Start Decisions are set");
 
-            if (def.StartDecision1 != StepStartDecision.NoDecision && def.StartFalseStepNumber < 1)
-                Throw("StartFalseStepNumber must be 1 or greater when StartDecisions are set");
+            if (def.StartDateDecision != StepStartDateDecision.NoDecision && def.StartFalseStepNumber < 1)
+                Throw("StartFalseStepNumber must be 1 or greater when Start Decisions are set");
 
-            if (def.StartDecision1 != StepStartDecision.NoDecision && def.StartTrueStepNumber == def.StartFalseStepNumber)
-                Throw("StartDecisions are set but StartTrueStepNumber and StartFalseStepNumber are the same value");
+            if (def.StartDateDecision != StepStartDateDecision.NoDecision && def.StartTrueStepNumber == def.StartFalseStepNumber)
+                Throw("Star tDecisions are set but StartTrueStepNumber and StartFalseStepNumber are the same value");
+
+            // TODO validate StartDateDecision vs StartDates content
+            // TODO validate StartTimeDecision vs StartTimes content
+            // TODO validate StartDecisionTimeZone vs Noda Time database
 
             if (def.ExitDecision != StepExitDecision.DoNextStepWithoutWaiting && (def.ExitSuccessStepNumber < 1 || def.ExitFailureStepNumber < 1 || def.ExitMixedStepNumber < 1))
-                Throw("Exit_StepNumbers must 1 or greater when ExitDecision is set");
+                Throw("Exit Step Numbers must 1 or greater when ExitDecision is set");
         }
 
         public static void ThrowIfInvalid(this FactoryStartOptions opt)

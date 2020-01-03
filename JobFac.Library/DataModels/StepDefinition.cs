@@ -9,10 +9,11 @@
 
         public string JobDefinitionIdList { get; set; } = string.Empty; // comma delimited
 
-        public StepStartDecision StartDecision1 { get; set; } = StepStartDecision.NoDecision;
-        public StepStartDecision StartDecision2 { get; set; } = StepStartDecision.NoDecision;
-        public string StartCriteria1 { get; set; } = string.Empty;
-        public string StartCriteria2 { get; set; } = string.Empty;
+        public StepStartDateDecision StartDateDecision { get; set; } = StepStartDateDecision.NoDecision;
+        public StepStartTimeDecision StartTimeDecision { get; set; } = StepStartTimeDecision.NoDecision;
+        public string StartDates { get; set; } = string.Empty;
+        public string StartTimes { get; set; } = string.Empty;
+        public string StartDecisionTimeZone { get; set; } = "America/New_York"; // UTC is "Etc/UTC" https://nodatime.org/TimeZones
         public StepAction StartTrueAction { get; set; } = StepAction.DoStepNumber;
         public StepAction StartFalseAction { get; set; } = StepAction.DoStepNumber;
         public int StartTrueStepNumber { get; set; } = 0;   // use current step# for either of these

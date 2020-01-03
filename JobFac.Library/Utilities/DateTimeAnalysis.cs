@@ -1,4 +1,7 @@
 ﻿using NodaTime;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 
 //
 //  IMPORTANT: 
@@ -9,11 +12,21 @@
 // Date-based information about a schedule target; used to determine
 // whether the job should be scheduled for the date in question.
 
-namespace JobFac.Services.Scheduling
+namespace JobFac.Library
 {
-    public class TargetDateAnalysis
+    public class DateTimeAnalysis
     {
-        public TargetDateAnalysis(LocalDate forZonedTargetDate)
+        public DateTimeAnalysis(LocalDate forZonedTargetDate)
+            => Constructor(forZonedTargetDate);
+
+        public DateTimeAnalysis(string nowForTimeZone)
+        {
+            var tz = DateTimeZoneProviders.Tzdb[nowForTimeZone];
+            var now = SystemClock.Instance.GetCurrentInstant().InZone(tz).Date;
+            Constructor(now);
+        }
+
+        private void Constructor(LocalDate forZonedTargetDate)
         {
             Date = forZonedTargetDate;
             LastDayOfMonth = Date.With(DateAdjusters.EndOfMonth).Day;
@@ -45,9 +58,28 @@ namespace JobFac.Services.Scheduling
         public bool IsFirstWeekdayOfMonth { get; private set; }
         public bool IsLastWeekdayOfMonth { get; private set; }
 
-        // For ScheduleDateMode.DateRanges the ScheduleDates values should be date ranges in the
-        // format mm/dd-mm/dd (exactly that format); this determines if target.Date is in that
-        // range (inclusive of the start/end dates for the range).
+        public bool InDaysOfWeek(List<string> dates)
+            => dates.Any(d => d.Equals(DayOfWeek));
+
+        public bool InDaysOfMonth(List<string> dates)
+            => dates.Any(d => d.Equals(DayOfMonth))
+            || (IsFirstDayOfMonth && dates.Any(d => d.Equals("first", StringComparison.OrdinalIgnoreCase)))
+            || (IsLastDayOfMonth && dates.Any(d => d.Equals("last", StringComparison.OrdinalIgnoreCase)));
+
+        public bool InSpecificDates(List<string> dates)
+            => dates.Any(d => d.Equals(MonthAndDay));
+
+        public bool InDateRange(List<string> dates)
+            => dates.Any(d => InDateRange(d));
+
+        public bool InWeekdays(List<string> dates)
+            => (IsFirstWeekdayOfMonth && dates.Any(d => d.Equals("first", StringComparison.OrdinalIgnoreCase)))
+            || (IsLastWeekdayOfMonth && dates.Any(d => d.Equals("last", StringComparison.OrdinalIgnoreCase)))
+            || (IsWeekday && dates.Any(d => d.Equals("weekday", StringComparison.OrdinalIgnoreCase)))
+            || (!IsWeekday && dates.Any(d => d.Equals("weekend", StringComparison.OrdinalIgnoreCase)));
+
+        // The date range values should be in the exact format mm/dd-mm/dd. This method determines
+        // if target.Date is in that range, inclusive of the start/end dates for the range.
         public bool InDateRange(string range)
         {
             var m1 = int.Parse(range.Substring(0, 2));
@@ -63,6 +95,15 @@ namespace JobFac.Services.Scheduling
 
             // Range is within the year:
             return c1 && c2;
+        }
+
+        // Works for HHmm or HH:mm. 
+        public static (int, int) GetHourMinute(string HHmm)
+        {
+            int n = HHmm.Length - 2;
+            int hour = int.Parse(HHmm.Substring(0, n));
+            int minute = int.Parse(HHmm.Substring(n, 2));
+            return (hour, minute);
         }
 
         private int FirstWeekdayOfMonth()

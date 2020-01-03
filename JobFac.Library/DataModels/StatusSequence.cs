@@ -7,6 +7,6 @@ namespace JobFac.Library.DataModels
     {
         public int SequenceStep { get; set; } = 0;
 
-        public List<JobStatus<StatusExternalProcess>> JobStatus { get; set; } = new List<JobStatus<StatusExternalProcess>>();
+        public Dictionary<int, StatusSequenceStep> StepStatus { get; set; } = new Dictionary<int, StatusSequenceStep>();
     }
 }

@@ -8,7 +8,7 @@ Manages job scheduling and scheduled execution. These are strictly internal and 
 * ScheduledExecution offloads job execution and ensures only-once execution
 * ScheduleWriter updates the schedule table with the next day's jobs
 
-* TargetDateAnalysis checks a variety of timezone-based target-date features
+* DateTimeAnalysis checks a variety of date/time features (moved to JobFac.Library)
 * TargetPlanner generates schedule entries for a given job and target-date
 
 Negative and positive test cases for all date/time schedule options:

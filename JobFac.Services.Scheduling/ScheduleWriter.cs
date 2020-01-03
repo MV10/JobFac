@@ -52,7 +52,7 @@ namespace JobFac.Services.Scheduling
             var paddedUtc = todayUtc.PlusMinutes(5);
             var paddedTime = paddedUtc.TimeOfDay;
             var runTargetUtc = await configCache.GetValue(ConstConfigKeys.ScheduleWriterRunTargetUtc);
-            var (runHour, runMinute) = TargetPlanner.GetHourMinute(runTargetUtc);
+            var (runHour, runMinute) = DateTimeAnalysis.GetHourMinute(runTargetUtc);
             if (paddedUtc.Date == todayUtc.Date && (paddedTime.Hour < runHour || (paddedTime.Hour == runHour && paddedTime.Minute < runMinute))) return;
 
             // Decision made: yes, write the next day's schedule records.
