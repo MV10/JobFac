@@ -28,11 +28,11 @@ namespace job.JobFac.aware
         static async Task Main(string[] args)
         {
             if (args.Length == 0)
-                throw new Exception("JobFac-aware apps require one GUID argument reflecting the job instance-key");
+                throw new ArgumentException("JobFac-aware apps require one GUID argument reflecting the job instance-key");
 
             JobInstanceKey = Formatting.FormattedInstanceKey(args[0]);
             if (!JobInstanceKey.HasContent())
-                throw new Exception("JobFac-aware apps require one GUID argument reflecting the job instance-key");
+                throw new ArgumentException("JobFac-aware apps require one GUID argument reflecting the job instance-key");
 
             var host = Host.CreateDefaultBuilder(args);
             host.ConfigureLogging(builder => builder.SetMinimumLevel(LogLevel.Warning));

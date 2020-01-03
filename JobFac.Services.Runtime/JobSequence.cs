@@ -41,14 +41,14 @@ namespace JobFac.Services.Runtime
         public async Task Start(JobDefinition<DefinitionSequence> jobDefinition, FactoryStartOptions options)
         {
             if (status != null)
-                throw new Exception($"Sequence has already been started (instance {jobInstanceKey})");
+                throw new JobFacInvalidRunStatusException($"Sequence has already been started (instance {jobInstanceKey})");
 
             jobDefinition.ThrowIfInvalid();
 
             steps = await definitionRepo.GetStepsForSequence(jobDefinition.Id);
 
             if (steps.Count == 0)
-                throw new Exception($"Unable to retrieve steps for sequence {jobDefinition.Id}");
+                throw new JobFacInvalidDataException($"Unable to retrieve steps for sequence {jobDefinition.Id}");
 
             this.jobDefinition = jobDefinition;
 
@@ -67,7 +67,7 @@ namespace JobFac.Services.Runtime
         public Task<JobStatus<StatusSequence>> GetStatus()
         {
             if (status == null)
-                throw new Exception($"Job has not been started (instance {jobInstanceKey})");
+                throw new JobFacInvalidRunStatusException($"Sequence has not been started (instance {jobInstanceKey})");
 
             return Task.FromResult(status);
         }
@@ -75,16 +75,16 @@ namespace JobFac.Services.Runtime
         public async Task SequencedJobStatusChanged(JobStatus<StatusExternalProcess> jobStatus)
         {
             if (status == null)
-                throw new Exception($"Sequence has not been started (instance {jobInstanceKey})");
+                throw new JobFacInvalidRunStatusException($"Sequence has not been started (instance {jobInstanceKey})");
 
             if(!status.JobTypeProperties.JobInstanceStepMap.ContainsKey(jobStatus.Key))
-                throw new Exception($"Job {jobStatus.Key} has no status stored in sequence {jobInstanceKey}");
+                throw new JobFacInvalidDataException($"Job {jobStatus.Key} has no status stored in sequence {jobInstanceKey}");
 
             var stepNum = status.JobTypeProperties.JobInstanceStepMap[jobStatus.Key];
             var stepStatus = status.JobTypeProperties.StepStatus[stepNum];
 
             if(!stepStatus.JobStatus.ContainsKey(jobStatus.Key))
-                throw new Exception($"Job {jobStatus.Key} has no status stored for sequence {jobInstanceKey} step {stepNum}");
+                throw new JobFacInvalidDataException($"Job {jobStatus.Key} has no status stored for sequence {jobInstanceKey} step {stepNum}");
 
             stepStatus.JobStatus[jobStatus.Key] = jobStatus;
 
@@ -140,7 +140,7 @@ namespace JobFac.Services.Runtime
         public async Task EndSequence()
         {
             if (status == null)
-                throw new Exception($"Sequence has not been started (instance {jobInstanceKey})");
+                throw new JobFacInvalidRunStatusException($"Sequence has not been started (instance {jobInstanceKey})");
 
             currentStep = null;
             await StoreNewRunStatus(RunStatus.Ended);
@@ -149,13 +149,13 @@ namespace JobFac.Services.Runtime
         public async Task Stop()
         {
             if (status == null)
-                throw new Exception($"Sequence has not been started (instance {jobInstanceKey})");
+                throw new JobFacInvalidRunStatusException($"Sequence has not been started (instance {jobInstanceKey})");
 
             if (status.HasExited)
-                throw new Exception($"Sequence has already exited (instance {jobInstanceKey})");
+                throw new JobFacInvalidRunStatusException($"Sequence has already exited (instance {jobInstanceKey})");
 
             if (status.RunStatus != RunStatus.Running)
-                throw new Exception($"Sequence is not in Running status (instance {jobInstanceKey})");
+                throw new JobFacInvalidRunStatusException($"Sequence is not in Running status (instance {jobInstanceKey})");
 
             await StoreNewRunStatus(RunStatus.StopRequested);
 
@@ -176,7 +176,7 @@ namespace JobFac.Services.Runtime
 
             // TODO set correct status and wrap up job processing before throwing
             if (currentStep == null)
-                throw new Exception($"Step {stepNum} not defined for sequence {jobDefinition.Id}");
+                throw new JobFacInvalidDataException($"Step {stepNum} not defined for sequence {jobDefinition.Id}");
             
             var stepStatus = new StatusSequenceStep { Step = status.JobTypeProperties.SequenceStep };
             status.JobTypeProperties.StepStatus.Add(stepNum, stepStatus);

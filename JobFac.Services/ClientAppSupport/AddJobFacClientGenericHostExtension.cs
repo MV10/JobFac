@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using JobFac.Library;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Orleans;
@@ -28,7 +29,8 @@ namespace JobFac.Services
 
             var orleansClient = await GetConnectedClient(config);
             if (orleansClient is null)
-                throw new Exception("Unable to connect to JobFac cluster");
+                throw new JobFacConnectivityException("Unable to connect to JobFac cluster");
+
             hostBuilder.ConfigureServices((context, services) =>
             {
                 services.AddSingleton<IJobFacServiceProvider>(new JobFacServiceProvider(orleansClient));

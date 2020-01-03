@@ -39,7 +39,7 @@ namespace JobFac.Services.Runtime
         public async Task Start(JobDefinition<DefinitionExternalProcess> jobDefinition, FactoryStartOptions options)
         {
             if (status != null)
-                throw new Exception($"Job has already been started (instance {jobInstanceKey})");
+                throw new JobFacInvalidRunStatusException($"Job has already been started (instance {jobInstanceKey})");
 
             jobDefinition.ThrowIfInvalid();
 
@@ -47,7 +47,7 @@ namespace JobFac.Services.Runtime
             {
                 parentSequence = GrainFactory.GetGrain<IJobSequence>(options.SequenceInstanceId);
                 if (parentSequence == null)
-                    throw new Exception($"Job {jobInstanceKey} failed to obtain parent Sequence {options.SequenceInstanceId}");
+                    throw new JobFacInvalidDataException($"Job {jobInstanceKey} failed to obtain parent Sequence {options.SequenceInstanceId}");
             }
 
             this.jobDefinition = jobDefinition;
@@ -69,7 +69,7 @@ namespace JobFac.Services.Runtime
         public Task<JobDefinition<DefinitionExternalProcess>> GetDefinition()
         {
             if (jobDefinition == null)
-                throw new Exception($"Job has not been started (instance {jobInstanceKey})");
+                throw new JobFacInvalidRunStatusException($"Job has not been started (instance {jobInstanceKey})");
 
             return Task.FromResult(jobDefinition);
         }
@@ -77,7 +77,7 @@ namespace JobFac.Services.Runtime
         public Task<JobStatus<StatusExternalProcess>> GetStatus()
         {
             if (status == null)
-                throw new Exception($"Job has not been started (instance {jobInstanceKey})");
+                throw new JobFacInvalidRunStatusException($"Job has not been started (instance {jobInstanceKey})");
 
             return Task.FromResult(status);
         }
@@ -85,7 +85,7 @@ namespace JobFac.Services.Runtime
         public Task<string> GetStartupPayload()
         {
             if (status == null)
-                throw new Exception($"Job has not been started (instance {jobInstanceKey})");
+                throw new JobFacInvalidRunStatusException($"Job has not been started (instance {jobInstanceKey})");
 
             status.StartOptions.StartupPayloads.TryGetValue(jobDefinition.Id, out var payload);
             return Task.FromResult(payload);
@@ -94,10 +94,10 @@ namespace JobFac.Services.Runtime
         public async Task UpdateExitMessage(RunStatus runStatus, int exitCode, string exitMessage)
         {
             if (status == null)
-                throw new Exception($"Job has not been started (instance {jobInstanceKey})");
+                throw new JobFacInvalidRunStatusException($"Job has not been started (instance {jobInstanceKey})");
 
             if (status.HasExited)
-                throw new Exception($"Job has already exited (instance {jobInstanceKey})");
+                throw new JobFacInvalidRunStatusException($"Job has already exited (instance {jobInstanceKey})");
 
             status.JobTypeProperties.ExitCode = exitCode;
             status.JobTypeProperties.ExitMessage = exitMessage;
@@ -107,10 +107,10 @@ namespace JobFac.Services.Runtime
         public async Task UpdateRunStatus(RunStatus runStatus)
         {
             if (status == null)
-                throw new Exception($"Job has not been started (instance {jobInstanceKey})");
+                throw new JobFacInvalidRunStatusException($"Job has not been started (instance {jobInstanceKey})");
 
             if (status.HasExited)
-                throw new Exception($"Job has already exited (instance {jobInstanceKey})");
+                throw new JobFacInvalidRunStatusException($"Job has already exited (instance {jobInstanceKey})");
 
             await StoreNewRunStatus(runStatus);
         }
@@ -118,13 +118,13 @@ namespace JobFac.Services.Runtime
         public async Task Stop()
         {
             if (status == null)
-                throw new Exception($"Job has not been started (instance {jobInstanceKey})");
+                throw new JobFacInvalidRunStatusException($"Job has not been started (instance {jobInstanceKey})");
 
             if (status.HasExited)
-                throw new Exception($"Job has already exited (instance {jobInstanceKey})");
+                throw new JobFacInvalidRunStatusException($"Job has already exited (instance {jobInstanceKey})");
 
             if (status.RunStatus != RunStatus.Running)
-                throw new Exception($"Job is not in Running status (instance {jobInstanceKey})");
+                throw new JobFacInvalidRunStatusException($"Job is not in Running status (instance {jobInstanceKey})");
 
             await StoreNewRunStatus(RunStatus.StopRequested);
 

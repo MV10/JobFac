@@ -108,6 +108,6 @@ namespace JobFac.Library.DataModels
         }
 
         private static void Throw(string message)
-            => throw new Exception($"Invalid definition, {message}");
+            => throw new JobFacValidationException($"Invalid definition, {message}");
     }
 }

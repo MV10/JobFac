@@ -31,6 +31,7 @@ The goal is to keep this fully open sourced and free to use, along the same line
 
 2020-jan-03
 * job sequence support completed
+* custom exceptions added
 
 2020-jan-02
 * all schedule date/time combinations tested

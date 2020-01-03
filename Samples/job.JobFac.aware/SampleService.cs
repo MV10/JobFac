@@ -1,4 +1,5 @@
-﻿using JobFac.Library.DataModels;
+﻿using JobFac.Library;
+using JobFac.Library.DataModels;
 using JobFac.Services;
 using Microsoft.Extensions.Hosting;
 using System;
@@ -28,18 +29,18 @@ namespace job.JobFac.aware
             {
                 jobService = jobFacServices.GetExternalProcessJob(Program.JobInstanceKey);
                 if (jobService == null)
-                    throw new Exception($"Unable to connect to job service (instance {Program.JobInstanceKey}");
+                    throw new JobFacConnectivityException($"Unable to connect to job service (instance {Program.JobInstanceKey}");
 
                 var payload = await jobService.GetStartupPayload();
                 if (!payload.HasContent())
-                    throw new Exception("The JobFac-aware sample requires a startup payload");
+                    throw new ArgumentException("The JobFac-aware sample requires a startup payload");
 
                 var args = payload.Split(',', StringSplitOptions.RemoveEmptyEntries);
                 if(args.Length != 2)
-                    throw new Exception("The JobFac-aware sample requires a comma-delimited startup payload with two values");
+                    throw new ArgumentException("The JobFac-aware sample requires a comma-delimited startup payload with two values");
 
                 if(!int.TryParse(args[0], out var seconds) || seconds < 1)
-                    throw new Exception("The JobFac-aware sample's startup payload requires a value defining number of seconds to sleep.");
+                    throw new ArgumentException("The JobFac-aware sample's startup payload requires a value defining number of seconds to sleep.");
 
                 Console.WriteLine($"Sample sleeping for {seconds} secs in 5 second increments.");
                 Console.WriteLine($"Second startup payload value is: {args[1]}");

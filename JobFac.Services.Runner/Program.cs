@@ -15,11 +15,11 @@ namespace JobFac.Services.Runner
         public static async Task Main(string[] args)
         {
             if (args.Length != 1)
-                throw new Exception("Runner requires one GUID argument reflecting the job instance-key");
+                throw new ArgumentException("Runner requires one GUID argument reflecting the job instance-key");
 
             JobInstanceKey = Formatting.FormattedInstanceKey(args[0]);
             if (!JobInstanceKey.HasContent())
-                throw new Exception("Runner requires one GUID argument reflecting the job instance-key");
+                throw new ArgumentException("Runner requires one GUID argument reflecting the job instance-key");
 
             var host = Host.CreateDefaultBuilder(args);
 

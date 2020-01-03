@@ -51,7 +51,7 @@ namespace JobFac.Services.Runtime
             {
                 JobType.ExternalProcess => await StartJobExternalProcess(options),
                 JobType.Sequence => await StartJobSequence(options),
-                _ => throw new Exception($"Job definition {options.DefinitionId} is not a type that can be started"),
+                _ => throw new JobFacStartJobDeniedException($"Job definition {options.DefinitionId} is not a type that can be started"),
             };
         }
 
@@ -64,13 +64,13 @@ namespace JobFac.Services.Runtime
 
             var jobDefinition = await definitionRepo.GetJobDefinition<DefinitionExternalProcess>(id);
             if (jobDefinition == null)
-                throw new Exception("Invalid job definition id");
+                throw new JobFacInvalidDataException("Invalid job definition id");
 
             if (options.ReplacementArguments.ContainsKey(id) && !jobDefinition.JobTypeProperties.AllowReplacementArguments)
-                throw new Exception($"Job definition {id} does not allow replacement arguments");
+                throw new ArgumentException($"Job definition {id} does not allow replacement arguments");
 
             if (options.StartupPayloads.ContainsKey(id) && !jobDefinition.JobTypeProperties.IsJobFacAware)
-                throw new Exception($"Job definition {id} is not JobFac-aware and doesn't support startup payloads");
+                throw new ArgumentException($"Job definition {id} is not JobFac-aware and doesn't support startup payloads");
 
             await ProcessAlreadyRunningJobs(jobDefinition);
 
@@ -88,7 +88,7 @@ namespace JobFac.Services.Runtime
 
             var jobDefinition = await definitionRepo.GetJobDefinition<DefinitionSequence>(id);
             if (jobDefinition == null)
-                throw new Exception("Invalid job definition id");
+                throw new JobFacInvalidDataException("Invalid job definition id");
 
             await ProcessAlreadyRunningJobs(jobDefinition);
 
@@ -111,7 +111,7 @@ namespace JobFac.Services.Runtime
                     // TODO job-already-running notifications
 
                     if (jobDefinition.AlreadyRunningAction == AlreadyRunningAction.DoNotStart)
-                        throw new Exception($"Job definition {jobDefinition.Id} is already running and is not configured to start additional instances");
+                        throw new JobFacStartJobDeniedException($"Job definition {jobDefinition.Id} is already running and is not configured to start additional instances");
 
                     if (jobDefinition.AlreadyRunningAction == AlreadyRunningAction.StopOthersBeforeStarting)
                     {
