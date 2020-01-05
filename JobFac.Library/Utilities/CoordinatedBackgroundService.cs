@@ -22,6 +22,8 @@ namespace Microsoft.Extensions.Hosting
 {
     public abstract class CoordinatedBackgroundService : IHostedService, IDisposable
     {
+        private readonly CancellationTokenSource appStoppingTokenSource = new CancellationTokenSource();
+
         protected readonly IHostApplicationLifetime appLifetime;
 
         public CoordinatedBackgroundService(IHostApplicationLifetime appLifetime)
@@ -31,17 +33,26 @@ namespace Microsoft.Extensions.Hosting
 
         public Task StartAsync(CancellationToken cancellationToken)
         {
-            appLifetime.ApplicationStarted.Register(async () => await ExecuteAsync());
-            return Task.CompletedTask;
+            appLifetime.ApplicationStarted.Register(async () =>
+                await ExecuteAsync(appStoppingTokenSource.Token).ConfigureAwait(false)
+            );
+            return InitializingAsync(cancellationToken);
         }
 
-        public Task StopAsync(CancellationToken cancellationToken)
+        public async Task StopAsync(CancellationToken cancellationToken)
         {
+            appStoppingTokenSource.Cancel();
+            await StoppingAsync(cancellationToken).ConfigureAwait(false);
             Dispose();
-            return Task.CompletedTask;
         }
 
-        protected abstract Task ExecuteAsync();
+        protected virtual Task InitializingAsync(CancellationToken cancelInitToken)
+            => Task.CompletedTask;
+
+        protected abstract Task ExecuteAsync(CancellationToken appStoppingToken);
+
+        protected virtual Task StoppingAsync(CancellationToken cancelStopToken)
+            => Task.CompletedTask;
 
         public virtual void Dispose()
         { }

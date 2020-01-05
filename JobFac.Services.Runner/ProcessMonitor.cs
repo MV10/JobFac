@@ -28,7 +28,8 @@ namespace JobFac.Services.Runner
             this.jobFacServices = jobFacServices;
         }
 
-        protected override async Task ExecuteAsync()
+        // TODO respond to appStoppingToken cancellation
+        protected override async Task ExecuteAsync(CancellationToken appStoppingToken)
         {
             IJobExternalProcess jobService = null;
 

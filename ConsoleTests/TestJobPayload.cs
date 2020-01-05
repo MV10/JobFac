@@ -2,6 +2,7 @@
 using JobFac.Services;
 using Microsoft.Extensions.Hosting;
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace ConsoleTests
@@ -18,7 +19,7 @@ namespace ConsoleTests
             this.jobFacServices = jobFacServices;
         }
 
-        protected override async Task ExecuteAsync()
+        protected override async Task ExecuteAsync(CancellationToken appStoppingToken)
         {
             // Exactly the same as TestJobMonitoring except the job is JobFac-aware and needs a payload
 
@@ -48,6 +49,7 @@ namespace ConsoleTests
                 IJobExternalProcess job = null;
                 while (!done && DateTimeOffset.UtcNow < timeout)
                 {
+                    appStoppingToken.ThrowIfCancellationRequested();
                     Console.WriteLine("Pausing 10 seconds then reading status.");
                     await Task.Delay(10000);
 

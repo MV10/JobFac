@@ -3,6 +3,7 @@ using JobFac.Library.DataModels;
 using JobFac.Services;
 using Microsoft.Extensions.Hosting;
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 
 // See Program.cs for details about the startup payload and
@@ -22,7 +23,7 @@ namespace job.JobFac.aware
             this.jobFacServices = jobFacServices;
         }
 
-        protected override async Task ExecuteAsync()
+        protected override async Task ExecuteAsync(CancellationToken appStoppingToken)
         {
             IJobExternalProcess jobService = null;
             try
@@ -49,6 +50,7 @@ namespace job.JobFac.aware
                 int counter = 0;
                 while (exitAt > DateTimeOffset.Now)
                 {
+                    appStoppingToken.ThrowIfCancellationRequested();
                     Console.WriteLine($"\nSleep interval #{++counter}");
                     for (int i = 0; i < 5; i++)
                     {

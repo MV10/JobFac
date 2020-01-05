@@ -3,6 +3,7 @@ using JobFac.Library.Database;
 using Microsoft.Extensions.Hosting;
 using System;
 using System.Threading.Tasks;
+using System.Threading;
 
 namespace ConsoleTests
 {
@@ -19,7 +20,7 @@ namespace ConsoleTests
             this.definitionRepo = definitionRepo;
         }
 
-        protected override async Task ExecuteAsync()
+        protected override async Task ExecuteAsync(CancellationToken appStoppingToken)
         {
             try
             {

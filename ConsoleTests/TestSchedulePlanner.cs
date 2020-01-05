@@ -7,6 +7,7 @@ using NodaTime.Text;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace ConsoleTests
@@ -20,7 +21,7 @@ namespace ConsoleTests
 
         DateTimeZone tz = DateTimeZoneProviders.Tzdb["America/New_York"];
 
-        protected override async Task ExecuteAsync()
+        protected override async Task ExecuteAsync(CancellationToken appStoppingToken)
         {
             try
             {

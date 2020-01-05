@@ -2,6 +2,7 @@
 using JobFac.Services;
 using Microsoft.Extensions.Hosting;
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace ConsoleTests
@@ -18,7 +19,7 @@ namespace ConsoleTests
             this.jobFacServices = jobFacServices;
         }
 
-        protected override async Task ExecuteAsync()
+        protected override async Task ExecuteAsync(CancellationToken appStoppingToken)
         {
             try
             {
