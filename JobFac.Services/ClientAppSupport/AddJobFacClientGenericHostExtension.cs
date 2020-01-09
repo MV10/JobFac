@@ -10,6 +10,21 @@ namespace JobFac.Services
 {
     public static class AddJobFacClientGenericHostExtension
     {
+        public static async Task<IHostBuilder> AddJobFacAwareBackgroundServiceAsync<TJobFacBackgroundService>(this IHostBuilder hostBuilder, Action<JobFacAwareBackgroundServiceOptions> optionsDelegate)
+            where TJobFacBackgroundService : JobFacAwareBackgroundService
+        {
+            hostBuilder.ConfigureServices((context, services) =>
+            {
+                JobFacAwareBackgroundServiceOptions options = new JobFacAwareBackgroundServiceOptions();
+                optionsDelegate(options);
+                services.AddSingleton(options);
+
+                services.AddHostedService<TJobFacBackgroundService>();
+            });
+            await hostBuilder.AddJobFacClientAsync();
+            return hostBuilder;
+        }
+
         public static async Task<IHostBuilder> AddJobFacClientAsync(this IHostBuilder hostBuilder, bool addIClusterClient = false)
         {
             // Nasty bit of code to "borrow" a copy of HostBulderContext so we can use it with await

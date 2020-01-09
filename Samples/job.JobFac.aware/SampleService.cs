@@ -11,40 +11,28 @@ using System.Threading.Tasks;
 
 namespace job.JobFac.aware
 {
-    public class SampleService : CoordinatedBackgroundService
+    public class SampleService : JobFacAwareBackgroundService
     {
-        private readonly IJobFacServiceProvider jobFacServices;
-
         public SampleService(
             IHostApplicationLifetime appLifetime,
-            IJobFacServiceProvider jobFacServices)
-            : base(appLifetime)
-        {
-            this.jobFacServices = jobFacServices;
-        }
+            IJobFacServiceProvider jobFacServices,
+            JobFacAwareBackgroundServiceOptions jobFacServiceOptions)
+            : base(appLifetime, jobFacServices, jobFacServiceOptions)
+        { }
 
         protected override async Task ExecuteAsync(CancellationToken appStoppingToken)
         {
-            IJobExternalProcess jobService = null;
             try
             {
-                jobService = jobFacServices.GetExternalProcessJob(Program.JobInstanceKey);
-                if (jobService == null)
-                    throw new JobFacConnectivityException($"Unable to connect to job service (instance {Program.JobInstanceKey}");
-
-                var payload = await jobService.GetStartupPayload();
-                if (!payload.HasContent())
-                    throw new ArgumentException("The JobFac-aware sample requires a startup payload");
-
-                var args = payload.Split(',', StringSplitOptions.RemoveEmptyEntries);
-                if(args.Length != 2)
+                var payload = jobStartupPayload.Split(',', StringSplitOptions.RemoveEmptyEntries);
+                if(payload.Length != 2)
                     throw new ArgumentException("The JobFac-aware sample requires a comma-delimited startup payload with two values");
 
-                if(!int.TryParse(args[0], out var seconds) || seconds < 1)
+                if(!int.TryParse(payload[0], out var seconds) || seconds < 1)
                     throw new ArgumentException("The JobFac-aware sample's startup payload requires a value defining number of seconds to sleep.");
 
                 Console.WriteLine($"Sample sleeping for {seconds} secs in 5 second increments.");
-                Console.WriteLine($"Second startup payload value is: {args[1]}");
+                Console.WriteLine($"Second startup payload value is: {payload[1]}");
 
                 var exitAt = DateTimeOffset.Now.AddSeconds(seconds);
                 int counter = 0;
@@ -66,7 +54,7 @@ namespace job.JobFac.aware
                 Console.WriteLine($"\nSample set exit code {Environment.ExitCode}");
 
                 Console.WriteLine("Writing final exit status and message to JobFac.");
-                await jobService.UpdateExitMessage(RunStatus.Ended, Environment.ExitCode, args[1]);
+                await jobService.UpdateExitMessage(RunStatus.Ended, Environment.ExitCode, payload[1]);
             }
             catch(Exception ex)
             {

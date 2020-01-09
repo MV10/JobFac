@@ -29,6 +29,10 @@ The goal is to keep this fully open sourced and free to use, along the same line
 
 ## Progress Notes
 
+2020-jan-09
+* formalized JobFac-aware jobs with base class and registration support
+* switched DateTimeAnalysis to factory construction (better semantics)
+
 2020-jan-03
 * job sequence support completed
 * custom exceptions added
