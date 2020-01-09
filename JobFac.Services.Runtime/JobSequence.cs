@@ -217,7 +217,7 @@ namespace JobFac.Services.Runtime
                 // The validator ensures StartDates and StartTimes are correct.
                 if (currentStep.StartDateDecision != StepStartDateDecision.NoDecision)
                 {
-                    var analysis = new DateTimeAnalysis(currentStep.StartDecisionTimeZone);
+                    var analysis = DateTimeAnalysis.Now(currentStep.StartDecisionTimeZone);
 
                     var dates = Formatting.SplitCommaSeparatedList(currentStep.StartDates);
                     bool startDecision = currentStep.StartDateDecision switch

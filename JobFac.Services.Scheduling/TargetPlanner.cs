@@ -39,7 +39,7 @@ namespace JobFac.Services.Scheduling
 
             jobZone = DateTimeZoneProviders.Tzdb[job.ScheduleTimeZone];
             var zonedDate = forTargetDate.InZone(jobZone).Date;
-            analysis = new DateTimeAnalysis(zonedDate);
+            analysis = DateTimeAnalysis.ForZonedTargetDate(zonedDate);
         }
 
         private List<ScheduledJobsTable> newSchedules = new List<ScheduledJobsTable>();

@@ -17,21 +17,11 @@ namespace JobFac.Library
 {
     public class DateTimeAnalysis
     {
-        public DateTimeAnalysis(LocalDate forZonedTargetDate)
-        {
-            // the scheduler doesn't use the time of day, which is 
-            // discarded before DateTimeAnalysis is created
-            Time = forZonedTargetDate.AtMidnight().TimeOfDay;
-            Constructor(forZonedTargetDate);
-        }
+        public static DateTimeAnalysis ForZonedTargetDate(LocalDate target)
+            => new DateTimeAnalysis(target);
 
-        public DateTimeAnalysis(string nowForTimeZone)
-        {
-            var tz = DateTimeZoneProviders.Tzdb[nowForTimeZone];
-            var now = SystemClock.Instance.GetCurrentInstant().InZone(tz);
-            Time = now.TimeOfDay;
-            Constructor(now.Date);
-        }
+        public static DateTimeAnalysis Now(string timeZone)
+            => new DateTimeAnalysis(timeZone);
 
         public LocalDate Date { get; private set; }  // adjusted to ScheduleTimeZone from the JobDefinition
         public LocalTime Time { get; private set; }  // only used by sequence steps, not used by scheduler
@@ -52,6 +42,22 @@ namespace JobFac.Library
         public string HourMinute { get; private set; }  // HHmm
         public string Hour { get; private set; }        // HH
         public string Minute { get; private set; }      // mm
+
+        private DateTimeAnalysis(LocalDate forZonedTargetDate)
+        {
+            // the scheduler doesn't use the time of day, which is 
+            // discarded before DateTimeAnalysis is created
+            Time = forZonedTargetDate.AtMidnight().TimeOfDay;
+            Constructor(forZonedTargetDate);
+        }
+
+        private DateTimeAnalysis(string nowForTimeZone)
+        {
+            var tz = DateTimeZoneProviders.Tzdb[nowForTimeZone];
+            var now = SystemClock.Instance.GetCurrentInstant().InZone(tz);
+            Time = now.TimeOfDay;
+            Constructor(now.Date);
+        }
 
         private void Constructor(LocalDate forZonedTargetDate)
         {
