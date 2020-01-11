@@ -11,19 +11,22 @@ namespace JobFac.Services
         public string[] CommandLineArgs { get; private set; } = new string[0];
         public string StartupPayload { get; private set; } = string.Empty;
         public IJobExternalProcess JobService { get; private set; } = null;
+        public IJobFacServiceProvider JobServiceProvider { get; private set; } = null;
 
         private readonly IHostApplicationLifetime appLifetime;
 
         public JobFacAwareProcessContext(
             IHostApplicationLifetime hostApplicationLifetime,
             string instanceId, string[] args, string payload,
-            IJobExternalProcess jobService)
+            IJobExternalProcess jobService,
+            IJobFacServiceProvider provider)
         {
             appLifetime = hostApplicationLifetime;
             JobInstanceId = instanceId;
             CommandLineArgs = args;
             StartupPayload = payload;
             JobService = jobService;
+            JobServiceProvider = provider;
         }
 
         public async Task ExitAsync(string exitMessage = "", int? exitCode = null)

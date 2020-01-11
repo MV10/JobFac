@@ -1,25 +1,25 @@
 ﻿using JobFac.Library;
 using JobFac.Library.DataModels;
-using JobFac.Services;
+using Microsoft.Extensions.Hosting;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Microsoft.Extensions.Hosting
+namespace JobFac.Services
 {
     public class JobFacAwareBackgroundService<TJobFacAwareProcess> : CoordinatedBackgroundService
         where TJobFacAwareProcess : JobFacAwareProcessBase
     {
         private readonly TJobFacAwareProcess process;
         private readonly IJobFacServiceProvider jobFacProvider;
-        private readonly JobFacAwareBackgroundServiceOptions options;
+        private readonly JobFacAwareProcessOptions options;
         private readonly string jobInstanceId;
 
         public JobFacAwareBackgroundService(
             TJobFacAwareProcess targetProcess,
             IHostApplicationLifetime hostApplicationLifetime,
             IJobFacServiceProvider jobFacServiceProvider,
-            JobFacAwareBackgroundServiceOptions jobFacServiceOptions)
+            JobFacAwareProcessOptions jobFacServiceOptions)
             : base(hostApplicationLifetime)
         {
             if (jobFacServiceOptions.CommandLineArgs.Length == 0)
@@ -73,14 +73,14 @@ namespace Microsoft.Extensions.Hosting
 
                 cancelInitToken.ThrowIfCancellationRequested();
 
-                jobFacContext = new JobFacAwareProcessContext(appLifetime, jobInstanceId, args, payload, service);
+                jobFacContext = new JobFacAwareProcessContext(appLifetime, jobInstanceId, args, payload, service, jobFacProvider);
 
                 await base.InitializingAsync(cancelInitToken);
             }
             catch (Exception ex)
             {
                 if (service != null)
-                    await service.UpdateExitMessage(RunStatus.Failed, options.ExceptionExitCode, ex.ToString());
+                    await service.UpdateExitMessage(RunStatus.Failed, options.ExceptionExitCode, ex.ToString()).ConfigureAwait(false);
                 
                 appLifetime.StopApplication();
             }
@@ -94,7 +94,7 @@ namespace Microsoft.Extensions.Hosting
             }
             catch (Exception ex)
             {
-                await jobFacContext.JobService.UpdateExitMessage(RunStatus.Failed, options.ExceptionExitCode, ex.ToString());
+                await jobFacContext.JobService.UpdateExitMessage(RunStatus.Failed, options.ExceptionExitCode, ex.ToString()).ConfigureAwait(false);
             }
             finally
             {

@@ -1,29 +1,50 @@
 ﻿using JobFac.Library;
+using JobFac.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Orleans;
 using System;
 using System.Threading.Tasks;
 
-namespace JobFac.Services
+namespace Microsoft.Extensions.Hosting
 {
     public static class AddJobFacClientGenericHostExtension
     {
-        public static async Task<IHostBuilder> AddJobFacAwareBackgroundServiceAsync<TJobFacAwareProcess>(this IHostBuilder hostBuilder, Action<JobFacAwareBackgroundServiceOptions> optionsDelegate)
+        private static readonly string DEVMODE_PAYLOAD = "JOBFAC_DEVPAYLOAD";
+
+        public static async Task<IHostBuilder> AddJobFacAwareServicesAsync<TJobFacAwareProcess>(this IHostBuilder hostBuilder, Action<JobFacAwareProcessOptions> optionsDelegate)
             where TJobFacAwareProcess : JobFacAwareProcessBase
         {
             hostBuilder.ConfigureServices((context, services) =>
             {
                 services.AddSingleton<TJobFacAwareProcess>();
                 
-                JobFacAwareBackgroundServiceOptions options = new JobFacAwareBackgroundServiceOptions();
+                JobFacAwareProcessOptions options = new JobFacAwareProcessOptions();
                 optionsDelegate(options);
-                services.AddSingleton(options);
 
-                services.AddHostedService<JobFacAwareBackgroundService<TJobFacAwareProcess>>();
+                if(!hostBuilder.Properties.ContainsKey(DEVMODE_PAYLOAD))
+                {
+                    services.AddHostedService<JobFacAwareBackgroundService<TJobFacAwareProcess>>();
+                }
+                else
+                {
+                    options.DevModeStartupPayload = (string)hostBuilder.Properties[DEVMODE_PAYLOAD];
+                    services.AddHostedService<JobFacAwareDevelopmentModeService<TJobFacAwareProcess>>();
+                }
+
+                services.AddSingleton(options);
             });
-            await hostBuilder.AddJobFacClientAsync();
+
+            if (!hostBuilder.Properties.ContainsKey(DEVMODE_PAYLOAD))
+                await hostBuilder.AddJobFacClientAsync();
+
+            return hostBuilder;
+        }
+
+        public static IHostBuilder UseJobFacAwareDevelopmentMode(this IHostBuilder hostBuilder, string startupPayload = "")
+        {
+            Console.WriteLine("JobFac dev-mode enabled");
+            hostBuilder.Properties.Add(DEVMODE_PAYLOAD, startupPayload);
             return hostBuilder;
         }
 

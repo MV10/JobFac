@@ -1,6 +1,12 @@
-﻿using JobFac.Services;
+﻿
+#define USE_JOBFAC_DEV_MODE
+#if RELEASE
+    #undef USE_JOBFAC_DEV_MODE
+#endif
+
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using System;
 using System.Threading.Tasks;
 
 // Configuring a job as JobFac-aware implies:
@@ -30,12 +36,26 @@ namespace job.JobFac.aware
         {
             var host = Host.CreateDefaultBuilder(args);
             host.ConfigureLogging(builder => builder.SetMinimumLevel(LogLevel.Warning));
-            await host.AddJobFacAwareBackgroundServiceAsync<SampleService>(options =>
+
+#if USE_JOBFAC_DEV_MODE
+            // Extra precaution since our JobFac definitions for the sample job
+            // do redirect output, indicating dev mode was accidentally left
+            // enabled. For the purposes of this sample code, this also allows
+            // you to run this job interactively, or to launch the sample via
+            // JobFac without having to reference a separate Release build. No
+            // command-line instance ID is required for dev mode usage, simply
+            // specify the job's internal arguments (the sample needs none).
+            if(!Console.IsOutputRedirected)
+                host.UseJobFacAwareDevelopmentMode(startupPayload:"10,Hello World!");
+#endif
+
+            await host.AddJobFacAwareServicesAsync<SampleService>(options =>
             {
                 options.CommandLineArgs = args;
                 options.RetrieveStartupPayload = true;
                 options.FailJobOnMissingStartupPayload = true;
             });
+
             await host.RunConsoleAsync();
         }
     }

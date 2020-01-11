@@ -31,6 +31,7 @@ The goal is to keep this fully open sourced and free to use, along the same line
 
 2020-jan-11
 * simplified implementation of JobFac-aware jobs
+* support for dev/test of JobFac-aware jobs without a JobFac server
 
 2020-jan-09
 * formalized JobFac-aware jobs with base class and registration support
