@@ -7,13 +7,16 @@ using System.Threading.Tasks;
 
 namespace Microsoft.Extensions.Hosting
 {
-    public abstract class JobFacAwareBackgroundService : CoordinatedBackgroundService
+    public class JobFacAwareBackgroundService<TJobFacAwareProcess> : CoordinatedBackgroundService
+        where TJobFacAwareProcess : JobFacAwareProcessBase
     {
-        protected readonly IJobFacServiceProvider jobFacServiceProvider;
-        protected readonly JobFacAwareBackgroundServiceOptions jobFacServiceOptions;
-        protected readonly string jobInstanceId;
+        private readonly TJobFacAwareProcess process;
+        private readonly IJobFacServiceProvider jobFacProvider;
+        private readonly JobFacAwareBackgroundServiceOptions options;
+        private readonly string jobInstanceId;
 
         public JobFacAwareBackgroundService(
+            TJobFacAwareProcess targetProcess,
             IHostApplicationLifetime hostApplicationLifetime,
             IJobFacServiceProvider jobFacServiceProvider,
             JobFacAwareBackgroundServiceOptions jobFacServiceOptions)
@@ -26,55 +29,42 @@ namespace Microsoft.Extensions.Hosting
             if (!jobInstanceId.HasContent())
                 throw new ArgumentException("JobFac-aware apps require one GUID argument reflecting the job instance-key");
 
-            this.jobFacServiceProvider = jobFacServiceProvider;
-            this.jobFacServiceOptions = jobFacServiceOptions;
+            process = targetProcess;
+            jobFacProvider = jobFacServiceProvider;
+            options = jobFacServiceOptions;
         }
 
-        private string payload = null;
-        private IJobExternalProcess service = null;
-
-        protected string jobStartupPayload
-        {
-            get
-            {
-                if (payload == null)
-                    throw new JobFacInvalidRunStatusException("The startup payload is unavailable until ExecuteAsync has been called");
-
-                return payload;
-            }
-        }
-
-        protected IJobExternalProcess jobService
-        {
-            get
-            {
-                if (service == null)
-                    throw new JobFacInvalidRunStatusException("The job service reference is unavailable until ExecuteAsync has been called");
-
-                return service;
-            }
-        }
+        private JobFacAwareProcessContext jobFacContext;
 
         protected override async Task InitializingAsync(CancellationToken cancelInitToken)
         {
+            IJobExternalProcess service = null;
             try
             {
-                service = jobFacServiceProvider.GetExternalProcessJob(jobInstanceId);
+                var args = options.CommandLineArgs.Length > 1 ? options.CommandLineArgs[1..^1] : new string[0];
+                if (!process.ValidateArguments(args))
+                    throw new ArgumentException($"Validation of the command-line arguments failed (instance {jobInstanceId})");
+
+                service = jobFacProvider.GetExternalProcessJob(jobInstanceId);
                 if (service == null)
-                    throw new JobFacConnectivityException($"Unable to connect to job service (instance {jobInstanceId}");
+                    throw new JobFacConnectivityException($"Unable to connect to job service (instance {jobInstanceId})");
 
                 cancelInitToken.ThrowIfCancellationRequested();
 
-                if (jobFacServiceOptions.RetrieveStartupPayload)
+                string payload;
+                if (options.RetrieveStartupPayload)
                 {
-                    var payload = await jobService.GetStartupPayload();
+                    payload = await service.GetStartupPayload();
                     if (!payload.HasContent())
                     {
-                        if (jobFacServiceOptions.FailJobOnMissingStartupPayload)
-                            throw new ArgumentException("The JobFac-aware sample requires a startup payload");
+                        if (options.FailJobOnMissingStartupPayload)
+                            throw new ArgumentException("The JobFac-aware process requires a startup payload");
 
                         payload = string.Empty;
                     }
+
+                    if(!process.ValidateStartupPayload(payload))
+                        throw new ArgumentException($"Validation of the startup payload failed (instance {jobInstanceId})");
                 }
                 else
                 {
@@ -83,12 +73,31 @@ namespace Microsoft.Extensions.Hosting
 
                 cancelInitToken.ThrowIfCancellationRequested();
 
+                jobFacContext = new JobFacAwareProcessContext(appLifetime, jobInstanceId, args, payload, service);
+
                 await base.InitializingAsync(cancelInitToken);
             }
             catch (Exception ex)
             {
                 if (service != null)
-                    await service.UpdateExitMessage(RunStatus.Failed, jobFacServiceOptions.ExceptionExitCode, ex.ToString());
+                    await service.UpdateExitMessage(RunStatus.Failed, options.ExceptionExitCode, ex.ToString());
+                
+                appLifetime.StopApplication();
+            }
+        }
+
+        protected override async Task ExecuteAsync(CancellationToken appStoppingToken)
+        {
+            try
+            {
+                await process.ExecuteProcessingAsync(jobFacContext, appStoppingToken);
+            }
+            catch (Exception ex)
+            {
+                await jobFacContext.JobService.UpdateExitMessage(RunStatus.Failed, options.ExceptionExitCode, ex.ToString());
+            }
+            finally
+            {
                 appLifetime.StopApplication();
             }
         }

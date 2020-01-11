@@ -1,7 +1,4 @@
-﻿using JobFac.Library;
-using JobFac.Library.DataModels;
-using JobFac.Services;
-using Microsoft.Extensions.Hosting;
+﻿using JobFac.Services;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -11,25 +8,29 @@ using System.Threading.Tasks;
 
 namespace job.JobFac.aware
 {
-    public class SampleService : JobFacAwareBackgroundService
+    public class SampleService : JobFacAwareProcessBase
     {
-        public SampleService(
-            IHostApplicationLifetime appLifetime,
-            IJobFacServiceProvider jobFacServices,
-            JobFacAwareBackgroundServiceOptions jobFacServiceOptions)
-            : base(appLifetime, jobFacServices, jobFacServiceOptions)
+        public SampleService()
         { }
 
-        protected override async Task ExecuteAsync(CancellationToken appStoppingToken)
+        public override bool ValidateStartupPayload(string payload)
+        {
+            var p = payload.Split(',', StringSplitOptions.RemoveEmptyEntries);
+            if (p.Length != 2)
+                throw new ArgumentException("The JobFac-aware sample requires a comma-delimited startup payload with two values");
+
+            if (!int.TryParse(p[0], out var seconds) || seconds < 1)
+                throw new ArgumentException("The JobFac-aware sample's startup payload requires a value defining number of seconds to sleep.");
+
+            return true;
+        }
+
+        public override async Task ExecuteProcessingAsync(JobFacAwareProcessContext jobFacContext, CancellationToken appStoppingToken)
         {
             try
             {
-                var payload = jobStartupPayload.Split(',', StringSplitOptions.RemoveEmptyEntries);
-                if(payload.Length != 2)
-                    throw new ArgumentException("The JobFac-aware sample requires a comma-delimited startup payload with two values");
-
-                if(!int.TryParse(payload[0], out var seconds) || seconds < 1)
-                    throw new ArgumentException("The JobFac-aware sample's startup payload requires a value defining number of seconds to sleep.");
+                var payload = jobFacContext.StartupPayload.Split(',', StringSplitOptions.RemoveEmptyEntries);
+                int.TryParse(payload[0], out var seconds);
 
                 Console.WriteLine($"Sample sleeping for {seconds} secs in 5 second increments.");
                 Console.WriteLine($"Second startup payload value is: {payload[1]}");
@@ -54,18 +55,13 @@ namespace job.JobFac.aware
                 Console.WriteLine($"\nSample set exit code {Environment.ExitCode}");
 
                 Console.WriteLine("Writing final exit status and message to JobFac.");
-                await jobService.UpdateExitMessage(RunStatus.Ended, Environment.ExitCode, payload[1]);
+                await jobFacContext.ExitAsync(payload[1]);
             }
             catch(Exception ex)
             {
                 Environment.ExitCode = -1;
                 Console.Error.WriteLine(ex);
-                if (jobService != null)
-                    await jobService.UpdateExitMessage(RunStatus.Failed, -1, ex.ToString());
-            }
-            finally
-            {
-                appLifetime.StopApplication();
+                await jobFacContext.ExitFailedAsync(ex);
             }
         }
     }

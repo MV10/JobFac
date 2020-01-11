@@ -10,16 +10,18 @@ namespace JobFac.Services
 {
     public static class AddJobFacClientGenericHostExtension
     {
-        public static async Task<IHostBuilder> AddJobFacAwareBackgroundServiceAsync<TJobFacBackgroundService>(this IHostBuilder hostBuilder, Action<JobFacAwareBackgroundServiceOptions> optionsDelegate)
-            where TJobFacBackgroundService : JobFacAwareBackgroundService
+        public static async Task<IHostBuilder> AddJobFacAwareBackgroundServiceAsync<TJobFacAwareProcess>(this IHostBuilder hostBuilder, Action<JobFacAwareBackgroundServiceOptions> optionsDelegate)
+            where TJobFacAwareProcess : JobFacAwareProcessBase
         {
             hostBuilder.ConfigureServices((context, services) =>
             {
+                services.AddSingleton<TJobFacAwareProcess>();
+                
                 JobFacAwareBackgroundServiceOptions options = new JobFacAwareBackgroundServiceOptions();
                 optionsDelegate(options);
                 services.AddSingleton(options);
 
-                services.AddHostedService<TJobFacBackgroundService>();
+                services.AddHostedService<JobFacAwareBackgroundService<TJobFacAwareProcess>>();
             });
             await hostBuilder.AddJobFacClientAsync();
             return hostBuilder;
